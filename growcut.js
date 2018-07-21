@@ -3,7 +3,7 @@ var Growcut = {
     width:         0,  /* width in pixels */
     height:        0,  /* height in pixels */
     sourceMap:     [], /* (width * height) array of [R, G, B] (0 - 255 each) */
-    labelMap:      [], /* (width * height) array of 0 (unknown), 1 (bg) or 2 (fg) */
+    labelMap:      [], /* (width * height) array of 0 (bg), 1 (fg) or undefined */
     distanceMap:   [], /* (width * height)^2 array of the similarity of each adjacent colors (0.0 - 1.0) */
     reliablityMap: [], /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
 
@@ -27,7 +27,7 @@ var Growcut = {
         this.height        = height;
         this.sourceMap     = sourceImage;
         this.labelMap      = seedImage.slice(0);
-        this.reliablityMap = seedImage.map(function (x) { return x ? 1 : 0; }); /* seeded or not */
+        this.reliablityMap = seedImage.map(function (x) { return x <= 1 ? 1 : 0; }); /* seeded or not */
 
         distanceMap = [];
         for (var x = 0; x < width; x++) {

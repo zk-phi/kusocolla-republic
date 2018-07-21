@@ -2,9 +2,9 @@ var image       = null;
 var imageWidth  = 0;
 var imageHeight = 0;
 var sourceImage = []; /* array of [R, G, B] */
-var seedImage   = []; /* array of [0 (undef), 1 (bg), 2 (fg)] */
+var seedImage   = []; /* array of 0 (bg), 1 (fg) or undefined */
 
-var penMode = 0;
+var penMode = undefined;
 var cutMode = false;
 
 function onChangePath (e) {
@@ -28,7 +28,6 @@ function onChangePath (e) {
                     var ix = y * imageWidth + x;
                     var data = [imageData[ix * 4], imageData[ix * 4 + 1], imageData[ix * 4 + 2]];
                     sourceImage[ix] = data;
-                    seedImage[ix]   = 0;
                 }
             }
 
@@ -56,10 +55,10 @@ function getImagePos (e, canvas /* optional */) {
 }
 
 function onMouseMoveCanvas (e) {
-    if (penMode && mouseDownPos) {
+    if (penMode < 2 && mouseDownPos) {
         var pos = getImagePos(e);
         var ctx = e.target.getContext('2d');
-        ctx.fillStyle = penMode == 1 ? "#ff0000" : "#0000ff";
+        ctx.fillStyle = penMode == 0 ? "#ff0000" : "#0000ff";
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, 3 * pos.scale, 0, 2 * Math.PI);
         ctx.fill();
@@ -75,7 +74,7 @@ function onMouseDownCanvas (e) {
 
 function onMouseUpCanvas (e) {
     if (mouseDownPos) {
-        if (penMode) {
+        if (penMode < 2) {
             onMouseMoveCanvas(e);
         } else if (cutMode) {
             var ctx = e.target.getContext('2d');
@@ -87,7 +86,7 @@ function onMouseUpCanvas (e) {
                 for (var y = 0; y < imageHeight; y++) {
                     var vec2 = { x: x - mouseDownPos.x, y: y - mouseDownPos.y };
                     if (vec.x * vec2.y - vec2.x * vec.y < 0) {
-                        seedImage[y * imageWidth + x] = 1;
+                        seedImage[y * imageWidth + x] = 0;
                         ctx.fillRect(x, y, 1, 1);
                     }
                 }
@@ -115,7 +114,7 @@ function render () {
             for (var dx = - blurRadius; dx <= blurRadius; dx++) {
                 for (var dy = - blurRadius; dy <= blurRadius; dy++) {
                     if (0 < x + dx && x + dx < imageWidth && 0 < y + dy && y + dy < imageHeight) {
-                        sum += res[(y + dy) * imageWidth + (x + dx)] == 1 ? 0 : 255;
+                        sum += res[(y + dy) * imageWidth + (x + dx)] * 255;
                         count++;
                     }
                 }
@@ -147,6 +146,6 @@ document.getElementById("canvas").addEventListener("mousemove", onMouseMoveCanva
 document.getElementById("canvas").addEventListener("mouseup", onMouseUpCanvas);
 document.getElementById("canvas").addEventListener("mouseout", onMouseUpCanvas);
 document.getElementById("render").onclick = render;
-document.getElementById("bg-cut").onclick = function () { penMode = 0; cutMode = true; };
-document.getElementById("bg").onclick = function () { penMode = 1; cutMode = false; };
-document.getElementById("fg").onclick = function () { penMode = 2; cutMode = false; };
+document.getElementById("bg-cut").onclick = function () { penMode = undefined; cutMode = true; };
+document.getElementById("bg").onclick = function () { penMode = 0; cutMode = false; };
+document.getElementById("fg").onclick = function () { penMode = 1; cutMode = false; };
