@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1.0">
+    <title>背景抜き太郎</title>
+    <script src="growcut.js"></script>
+    <style>
+canvas {
+    width: 100%;
+    max-width: 600px;
+}
+    </style>
+  </head>
+
+  <body class="container">
+    <div id="app">
+
+      <h1><small>クソコラ支援</small> 背景抜き太郎</h1>
+
+      <div>
+        <input id="file" type="file" />
+      </div>
+
+      <div>
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <div>
+        <button id="bg-cut">カット追加 (線より左を削除)</button>
+        <button id="bg">背景ヒントを追加</button>
+        <button id="fg">前景ヒントを追加</button>
+      </div>
+
+      <div>
+        <button id="render">やっていく</button>
+      </div>
+
+      <div>
+        <canvas id="res"></canvas>
+      </div>
+
+    </div>
+  </body>
+  <script src="script.js"></script>
+</html>
