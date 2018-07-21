@@ -96,15 +96,16 @@ function onMouseUpCanvas (e) {
     }
 }
 
-function render () {
-    Growcut.initialize(imageWidth, imageHeight, sourceImage, seedImage);
+/* http://d.hatena.ne.jp/tshino/20180106/1515218776 */
+function newLocalWorker (path) {
+    var baseURL = window.location.href.replace(/\\/g, '/').replace(/\/[^\/]*$/, '/');
+    var array = ['importScripts("' + baseURL + path + '");'];
+    var blob = new Blob(array, {type: 'text/javascript'});
+    var url = window.URL.createObjectURL(blob);
+    return new Worker(url);
+};
 
-    do {
-        var updated = Growcut.forwardGeneration();
-        console.log(updated);
-    } while (updated);
-
-    var res = Growcut.getResult();
+function _renderResult (res) {
     var blurRadius = Math.floor(Math.min(imageWidth, imageHeight) / 250);
     var blurred = [];
     for (var x = 0; x < imageWidth; x++) {
@@ -138,6 +139,49 @@ function render () {
         }
     }
     ctx.putImageData(imageData, 0, 0);
+
+    document.getElementById("status").innerHTML = "";
+}
+
+function run () {
+    var worker;
+    try {
+        worker = newLocalWorker("growcut.js");
+    } catch (e) {
+        worker = new Worker("growcut.js");
+    }
+
+    var generation = 1;
+    worker.addEventListener('message', function (e) {
+        switch (e.data.method) {
+            case "initialize-complete":
+                document.getElementById("status").innerHTML = "Growcut-ing (第" + generation + "世代) ...";
+                worker.postMessage({ method: "forwardGeneration" });
+                break;
+            case "forwardGeneration-complete":
+                document.getElementById("status").innerHTML = "Growcut-ing (第" + generation + "世代: " + e.data.updated +  ") ...";
+                if (e.data.updated) {
+                    generation++;
+                    worker.postMessage({ method: "forwardGeneration" });
+                } else {
+                    worker.postMessage({ method: "getResult" });
+                }
+                break;
+            case "getResult-complete":
+                document.getElementById("status").innerHTML = "完了処理中 ...";
+                _renderResult(e.data.result);
+                break;
+        }
+    });
+
+    document.getElementById("status").innerHTML = "初期化中 ...";
+    worker.postMessage({
+        method: "initialize",
+        width: imageWidth,
+        height: imageHeight,
+        sourceImage: sourceImage,
+        seedImage: seedImage
+    })
 }
 
 document.getElementById("file").onchange = onChangePath;
@@ -145,7 +189,7 @@ document.getElementById("canvas").addEventListener("mousedown", onMouseDownCanva
 document.getElementById("canvas").addEventListener("mousemove", onMouseMoveCanvas);
 document.getElementById("canvas").addEventListener("mouseup", onMouseUpCanvas);
 document.getElementById("canvas").addEventListener("mouseout", onMouseUpCanvas);
-document.getElementById("render").onclick = render;
+document.getElementById("run").onclick = run;
 document.getElementById("bg-cut").onclick = function () { penMode = undefined; cutMode = true; };
 document.getElementById("bg").onclick = function () { penMode = 0; cutMode = false; };
 document.getElementById("fg").onclick = function () { penMode = 1; cutMode = false; };

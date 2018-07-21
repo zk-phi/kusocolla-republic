@@ -88,3 +88,28 @@ var Growcut = {
         return this.labelMap.slice(0);
     }
 }
+
+/* WebWorker things */
+
+self.addEventListener('message', function (e) {
+    switch (e.data.method) {
+        case "initialize":
+            Growcut.initialize(e.data.width, e.data.height, e.data.sourceImage, e.data.seedImage);
+            self.postMessage({
+                method: "initialize-complete"
+            });
+            break;
+        case "forwardGeneration":
+            self.postMessage({
+                method: "forwardGeneration-complete",
+                updated: Growcut.forwardGeneration()
+            });
+            break;
+        case "getResult":
+            self.postMessage({
+                method: "getResult-complete",
+                result: Growcut.getResult()
+            });
+            break;
+    }
+});
