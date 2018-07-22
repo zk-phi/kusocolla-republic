@@ -139,9 +139,6 @@ function _renderResult (res) {
         }
     }
     ctx.putImageData(imageData, 0, 0);
-
-    document.getElementById("status").innerHTML = "";
-    document.getElementById("run").disabled = false;
 }
 
 function run () {
@@ -155,16 +152,16 @@ function run () {
                 worker.postMessage({ method: "forwardGeneration" });
                 break;
             case "forwardGeneration-complete":
-                document.getElementById("status").innerHTML = "Growcut-ing (第" + generation + "世代: " + e.data.updated +  ") ...";
                 if (e.data.updated) {
-                    generation++;
+                    document.getElementById("status").innerHTML = "Growcut-ing (第" + (generation++) + "世代: " + e.data.updated +  ") ...";
                     worker.postMessage({ method: "forwardGeneration" });
                 } else {
                     worker.postMessage({ method: "getResult" });
                 }
                 break;
             case "getResult-complete":
-                document.getElementById("status").innerHTML = "完了処理中 ...";
+                document.getElementById("status").innerHTML = "";
+                document.getElementById("run").disabled = false;
                 _renderResult(e.data.result);
                 break;
         }
