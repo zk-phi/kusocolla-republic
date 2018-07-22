@@ -23,19 +23,15 @@ var Growcut = {
     },
 
     /* Initialize the growcut engine. */
-    initialize: function (width, height, sourceImage, seedImage) {
+    loadImage: function (width, height, sourceImage) {
         this.width         = width;
         this.height        = height;
         this.sourceMap     = sourceImage;
-        this.labelMap      = seedImage.slice(0);
-        this.reliablityMap = seedImage.map(function (x) { return x <= 1 ? 1 : 0; }); /* seeded or not */
 
-        this.updatedCells = [];
-        this.distanceMap  = [];
+        this.distanceMap = [];
         for (var x = 0; x < width; x++) {
             for (var y = 0; y < height; y++) {
                 var ix = y * width + x;
-                this.updatedCells.push([x, y]);
                 /*     x - 1        x        x + 1
                    +------------+--------+------------+
                    | -          | -      | -          | y - 1
@@ -52,6 +48,18 @@ var Growcut = {
                     if (x > 0) this._setDistanceOfTwoCells(ix, (ix + width) - 1);
                     if (x + 1 < width) this._setDistanceOfTwoCells(ix, ix + width + 1);
                 }
+            }
+        }
+    },
+
+    initialize: function (seedImage) {
+        this.labelMap      = seedImage.slice(0);
+        this.reliablityMap = seedImage.map(function (x) { return x <= 1 ? 1 : 0; }); /* seeded or not */
+
+        this.updatedCells = [];
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                this.updatedCells.push([x, y]);
             }
         }
     },
@@ -102,8 +110,14 @@ var Growcut = {
 
 self.addEventListener('message', function (e) {
     switch (e.data.method) {
+        case "loadImage":
+            Growcut.loadImage(e.data.width, e.data.height, e.data.sourceImage);
+            self.postMessage({
+                method: "loadImage-complete"
+            });
+            break;
         case "initialize":
-            Growcut.initialize(e.data.width, e.data.height, e.data.sourceImage, e.data.seedImage);
+            Growcut.initialize(e.data.seedImage);
             self.postMessage({
                 method: "initialize-complete"
             });
