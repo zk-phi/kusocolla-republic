@@ -115,6 +115,32 @@ var Growcut = {
         return updated;
     },
 
+    getBlurredResult: function (radius) {
+        var blurred = [];
+        for (var x = 0; x < this.width; x++) {
+            cell: for (var y = 0; y < this.height; y++) {
+                var sum   = 0;
+                var count = 0;
+                for (var dx = - radius; dx <= radius; dx++) {
+                    for (var dy = - radius; dy <= radius; dy++) {
+                        if (0 < x + dx && x + dx < this.width && 0 < y + dy && y + dy < this.width) {
+                            var ix = (y + dy) * this.width + (x + dx);
+                            if (this.labelMap[ix] < 2) {
+                                sum += this.labelMap[ix];
+                                count++;
+                            } else {
+                                blurred[y * this.width + x] = undefined;
+                                continue cell;
+                            }
+                        }
+                    }
+                }
+                blurred[y * this.width + x] = sum / count;
+            }
+        }
+        return blurred;
+    },
+
     getResult: function () {
         return this.labelMap.slice(0);
     }
@@ -134,6 +160,10 @@ self.addEventListener('message', function (e) {
             break;
         case "forwardGeneration":
             self.postMessage({ method: "forwardGeneration-complete", updated: Growcut.forwardGeneration() });
+            break;
+        case "getBlurredResult":
+            var result = Growcut.getBlurredResult(e.data.radius);
+            self.postMessage({ method: "getBlurredResult-complete", result: result });
             break;
         case "getResult":
             self.postMessage({ method: "getResult-complete", result: Growcut.getResult() });

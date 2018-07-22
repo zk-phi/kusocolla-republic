@@ -106,24 +106,6 @@ function onMouseUpCanvas (e) {
 }
 
 function _renderResult (res) {
-    var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 250);
-    var blurred = [];
-    for (var x = 0; x < image.naturalWidth; x++) {
-        for (var y = 0; y < image.naturalWidth; y++) {
-            var sum   = 0;
-            var count = 0;
-            for (var dx = - blurRadius; dx <= blurRadius; dx++) {
-                for (var dy = - blurRadius; dy <= blurRadius; dy++) {
-                    if (0 < x + dx && x + dx < image.naturalWidth && 0 < y + dy && y + dy < image.naturalHeight) {
-                        sum += res[(y + dy) * image.naturalWidth + (x + dx)] * 255;
-                        count++;
-                    }
-                }
-            }
-            blurred[y * image.naturalWidth + x] = sum / count;
-        }
-    }
-
     var canvas = document.getElementById("res");
     canvas.width  = image.naturalWidth;
     canvas.height = image.naturalHeight;
@@ -135,7 +117,7 @@ function _renderResult (res) {
     for (var x = 0; x < image.naturalWidth; x++) {
         for (var y = 0; y < image.naturalHeight; y++) {
             var ix = y * image.naturalWidth + x;
-            imageData.data[ix * 4 + 3] = blurred[ix];
+            imageData.data[ix * 4 + 3] = Math.floor(res[ix] * 255);
         }
     }
     ctx.putImageData(imageData, 0, 0);
@@ -156,10 +138,12 @@ function run () {
                     document.getElementById("status").innerHTML = "Growcut-ing (第" + (generation++) + "世代: " + e.data.updated +  ") ...";
                     worker.postMessage({ method: "forwardGeneration" });
                 } else {
-                    worker.postMessage({ method: "getResult" });
+                    var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 250);
+                    document.getElementById("status").innerHTML = "境界をぼかしています ...";
+                    worker.postMessage({ method: "getBlurredResult", radius: blurRadius });
                 }
                 break;
-            case "getResult-complete":
+            case "getBlurredResult-complete":
                 document.getElementById("status").innerHTML = "";
                 document.getElementById("run").disabled = false;
                 _renderResult(e.data.result);
