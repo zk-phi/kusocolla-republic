@@ -10,20 +10,6 @@ var Growcut = {
     reliablityMap: [], /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
     updatedCells:  [], /* list of recently updated [X, Y] s (for optimization) */
 
-    /* Internal: Set distanceMap for a cell-pair. */
-    _setDistanceOfTwoCells: function (ix, ix2) {
-        if (!this.distanceMap[ix])  this.distanceMap[ix] = [];
-        if (!this.distanceMap[ix2]) this.distanceMap[ix2] = [];
-
-        var distance = ix == ix2 ? 0 : Math.sqrt(
-            Math.pow(this.sourceMap[ix][0] - this.sourceMap[ix2][0], 2)
-            + Math.pow(this.sourceMap[ix][1] - this.sourceMap[ix2][1], 2)
-            + Math.pow(this.sourceMap[ix][2] - this.sourceMap[ix2][2], 2)
-        ) / 255 / Math.sqrt(3);
-
-        this.distanceMap[ix][ix2] = this.distanceMap[ix2][ix] = 1.0 - distance;
-    },
-
     /* Initialize the growcut engine. */
     loadImage: function (width, height, sourceImage) {
         this.width         = width;
@@ -31,6 +17,20 @@ var Growcut = {
         this.sourceMap     = sourceImage;
 
         this.distanceMap = [];
+
+        var _setDistanceOfTwoCells = function (ix, ix2) {
+            if (!this.distanceMap[ix])  this.distanceMap[ix] = [];
+            if (!this.distanceMap[ix2]) this.distanceMap[ix2] = [];
+
+            var distance = ix == ix2 ? 0 : Math.sqrt(
+                Math.pow(this.sourceMap[ix][0] - this.sourceMap[ix2][0], 2)
+                + Math.pow(this.sourceMap[ix][1] - this.sourceMap[ix2][1], 2)
+                + Math.pow(this.sourceMap[ix][2] - this.sourceMap[ix2][2], 2)
+            ) / 255 / Math.sqrt(3);
+
+            this.distanceMap[ix][ix2] = this.distanceMap[ix2][ix] = 1.0 - distance;
+        }.bind(this);
+
         for (var x = 0; x < width; x++) {
             for (var y = 0; y < height; y++) {
                 var ix = y * width + x;
@@ -43,12 +43,12 @@ var Growcut = {
                    | ix + w - 1 | ix + w | ix + w + 1 | y + 1
                    +------------+--------+------------+
                  */
-                this._setDistanceOfTwoCells(ix, ix);
-                if (x + 1 < width) this._setDistanceOfTwoCells(ix, ix + 1);
+                _setDistanceOfTwoCells(ix, ix);
+                if (x + 1 < width) _setDistanceOfTwoCells(ix, ix + 1);
                 if (y + 1 < height) {
-                    this._setDistanceOfTwoCells(ix, ix + width);
-                    if (x > 0) this._setDistanceOfTwoCells(ix, (ix + width) - 1);
-                    if (x + 1 < width) this._setDistanceOfTwoCells(ix, ix + width + 1);
+                    _setDistanceOfTwoCells(ix, ix + width);
+                    if (x > 0) _setDistanceOfTwoCells(ix, (ix + width) - 1);
+                    if (x + 1 < width) _setDistanceOfTwoCells(ix, ix + width + 1);
                 }
             }
         }
@@ -69,7 +69,6 @@ var Growcut = {
     /* Compute a step forward. */
     forwardGeneration: function () {
         var updated = 0;
-
 
         var nextUpdatedCells = [];
         for (var i = 0; i < this.updatedCells.length; i++) {
@@ -114,27 +113,17 @@ self.addEventListener('message', function (e) {
     switch (e.data.method) {
         case "loadImage":
             Growcut.loadImage(e.data.width, e.data.height, e.data.sourceImage);
-            self.postMessage({
-                method: "loadImage-complete"
-            });
+            self.postMessage({ method: "loadImage-complete" });
             break;
         case "initialize":
             Growcut.initialize(e.data.seedImage);
-            self.postMessage({
-                method: "initialize-complete"
-            });
+            self.postMessage({ method: "initialize-complete" });
             break;
         case "forwardGeneration":
-            self.postMessage({
-                method: "forwardGeneration-complete",
-                updated: Growcut.forwardGeneration()
-            });
+            self.postMessage({ method: "forwardGeneration-complete", updated: Growcut.forwardGeneration() });
             break;
         case "getResult":
-            self.postMessage({
-                method: "getResult-complete",
-                result: Growcut.getResult()
-            });
+            self.postMessage({ method: "getResult-complete", result: Growcut.getResult() });
             break;
     }
 });
