@@ -141,9 +141,12 @@ function _renderResult (res) {
     ctx.putImageData(imageData, 0, 0);
 
     document.getElementById("status").innerHTML = "";
+    document.getElementById("run").disabled = false;
 }
 
 function run () {
+    document.getElementById("run").disabled = true;
+
     var worker;
     try {
         worker = newLocalWorker("growcut.js");
