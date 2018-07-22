@@ -138,7 +138,7 @@ function run () {
                     document.getElementById("status").innerHTML = "Growcut-ing (第" + (generation++) + "世代: " + e.data.updated +  ") ...";
                     worker.postMessage({ method: "forwardGeneration" });
                 } else {
-                    var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 250);
+                    var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 500);
                     document.getElementById("status").innerHTML = "境界をぼかしています ...";
                     worker.postMessage({ method: "getBlurredResult", radius: blurRadius });
                 }
