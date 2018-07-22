@@ -12,9 +12,9 @@ var Growcut = {
 
     /* Initialize the growcut engine. */
     loadImage: function (width, height, sourceImage) {
-        this.width         = width;
-        this.height        = height;
-        this.sourceMap     = sourceImage;
+        this.width     = width;
+        this.height    = height;
+        this.sourceMap = sourceImage;
 
         this.distanceMap = [];
 
