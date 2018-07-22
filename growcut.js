@@ -56,12 +56,14 @@ var Growcut = {
 
     initialize: function (seedImage) {
         this.labelMap      = seedImage.slice(0);
-        this.reliablityMap = seedImage.map(function (x) { return x <= 1 ? 1 : 0; }); /* seeded or not */
-
-        this.updatedCells = [];
+        this.reliablityMap = [];
+        this.updatedCells  = [];
         for (var x = 0; x < this.width; x++) {
             for (var y = 0; y < this.height; y++) {
-                this.updatedCells.push([x, y]);
+                var ix = y * this.width + x;
+                if (this.reliablityMap[ix] = seedImage[ix] < 2 ? 1 : 0) {
+                    this.updatedCells.push([x, y]);
+                }
             }
         }
     },
@@ -70,10 +72,23 @@ var Growcut = {
     forwardGeneration: function () {
         var updated = 0;
 
-        var nextUpdatedCells = [];
+        var targetCells = [];
         for (var i = 0; i < this.updatedCells.length; i++) {
-            var x  = this.updatedCells[i][0];
-            var y  = this.updatedCells[i][1];
+            var x = this.updatedCells[i][0];
+            var y = this.updatedCells[i][1];
+            [-1, 0, 1].forEach(function (dx) {
+                [-1, 0, 1].forEach(function (dy) {
+                    if (0 < x + dx && x + dx < this.width && 0 < y + dy && y + dy < this.height) {
+                        targetCells.push([x + dx, y + dy]);
+                    }
+                }.bind(this));
+            }.bind(this))
+        }
+
+        this.updatedCells = [];
+        for (var i = 0; i < targetCells.length; i++) {
+            var x  = targetCells[i][0];
+            var y  = targetCells[i][1];
             var ix = y * this.width + x;
 
             var adjacentCells = [];
@@ -92,12 +107,11 @@ var Growcut = {
             var next = adjacentCells.reduce(function (x, y) { return x.rel < y.rel ? y : x; });
             if (this.labelMap[ix] != next.label || this.reliablityMap[ix] != next.rel) {
                 updated++;
-                nextUpdatedCells.push([x, y]);
+                this.updatedCells.push([x, y]);
             }
             this.reliablityMap[ix] = next.rel;
             this.labelMap[ix]      = next.label;
         }
-        this.updatedCells = nextUpdatedCells;
 
         return updated;
     },
