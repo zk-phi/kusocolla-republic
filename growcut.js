@@ -6,6 +6,7 @@ var Growcut = {
     labelMap:      [], /* (width * height) array of 0 (bg), 1 (fg) or undefined */
     distanceMap:   [], /* (width * height)^2 array of the similarity of each adjacent colors (0.0 - 1.0) */
     reliablityMap: [], /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
+    updatedCells:  [], /* list of recently updated [X, Y] s (for optimization) */
 
     /* Internal: Set distanceMap for a cell-pair. */
     _setDistanceOfTwoCells: function (ix, ix2) {
@@ -29,10 +30,12 @@ var Growcut = {
         this.labelMap      = seedImage.slice(0);
         this.reliablityMap = seedImage.map(function (x) { return x <= 1 ? 1 : 0; }); /* seeded or not */
 
-        distanceMap = [];
+        this.updatedCells = [];
+        this.distanceMap  = [];
         for (var x = 0; x < width; x++) {
             for (var y = 0; y < height; y++) {
                 var ix = y * width + x;
+                this.updatedCells.push([x, y]);
                 /*     x - 1        x        x + 1
                    +------------+--------+------------+
                    | -          | -      | -          | y - 1
@@ -57,29 +60,35 @@ var Growcut = {
     forwardGeneration: function () {
         var updated = 0;
 
-        for (var x = 0; x < this.width; x++) {
-            for (var y = 0; y < this.height; y++) {
-                var ix = y * this.width + x;
 
-                var adjacentCells = [];
-                [-1, 0, 1].forEach(function (dx) {
-                    [-1, 0, 1].forEach(function (dy) {
-                        if (0 < x + dx && x + dx < this.width && 0 < y + dy && y + dy < this.height) {
-                            var ix2 = (y + dy) * this.width + (x + dx);
-                            adjacentCells.push({
-                                label: this.labelMap[ix2],
-                                rel:   this.reliablityMap[ix2] * this.distanceMap[ix][ix2]
-                            });
-                        }
-                    }.bind(this));
+        var nextUpdatedCells = [];
+        for (var i = 0; i < this.updatedCells.length; i++) {
+            var x  = this.updatedCells[i][0];
+            var y  = this.updatedCells[i][1];
+            var ix = y * this.width + x;
+
+            var adjacentCells = [];
+            [-1, 0, 1].forEach(function (dx) {
+                [-1, 0, 1].forEach(function (dy) {
+                    if (0 < x + dx && x + dx < this.width && 0 < y + dy && y + dy < this.height) {
+                        var ix2 = (y + dy) * this.width + (x + dx);
+                        adjacentCells.push({
+                            label: this.labelMap[ix2],
+                            rel:   this.reliablityMap[ix2] * this.distanceMap[ix][ix2]
+                        });
+                    }
                 }.bind(this));
+            }.bind(this));
 
-                var next = adjacentCells.reduce(function (x, y) { return x.rel < y.rel ? y : x; });
-                if (this.labelMap[ix] != next.label) updated++;
-                this.reliablityMap[ix] = next.rel;
-                this.labelMap[ix]      = next.label;
+            var next = adjacentCells.reduce(function (x, y) { return x.rel < y.rel ? y : x; });
+            if (this.labelMap[ix] != next.label || this.reliablityMap[ix] != next.rel) {
+                updated++;
+                nextUpdatedCells.push([x, y]);
             }
+            this.reliablityMap[ix] = next.rel;
+            this.labelMap[ix]      = next.label;
         }
+        this.updatedCells = nextUpdatedCells;
 
         return updated;
     },
