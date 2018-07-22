@@ -1,22 +1,11 @@
 var image       = null;
-var imageWidth  = 0;
-var imageHeight = 0;
 var sourceImage = []; /* array of [R, G, B] */
 var seedImage   = []; /* array of 0 (bg), 1 (fg) or undefined */
 
-var penMode = undefined;
+var penMode = undefined; /* 0, 1 or undefined */
 var cutMode = false;
 
 var worker;
-
-/* http://d.hatena.ne.jp/tshino/20180106/1515218776 */
-function newLocalWorker (path) {
-    var baseURL = window.location.href.replace(/\\/g, '/').replace(/\/[^\/]*$/, '/');
-    var array = ['importScripts("' + baseURL + path + '");'];
-    var blob = new Blob(array, {type: 'text/javascript'});
-    var url = window.URL.createObjectURL(blob);
-    return new Worker(url);
-};
 
 function onChangePath (e) {
     var reader = new FileReader();
@@ -25,39 +14,40 @@ function onChangePath (e) {
 
         image.onload = function () {
             var tmpCanvas = document.createElement("canvas");
-            tmpCanvas.width  = imageWidth  = image.naturalWidth;
-            tmpCanvas.height = imageHeight = image.naturalHeight;
+            tmpCanvas.width  = image.naturalWidth;
+            tmpCanvas.height = image.naturalHeight;
 
             var ctx = tmpCanvas.getContext('2d');
             ctx.drawImage(image, 0, 0);
 
             sourceImage = [];
             seedImage = [];
-            var imageData = ctx.getImageData(0, 0, imageWidth, imageHeight).data;
-            for (var x = 0; x < imageWidth; x++) {
-                for (var y = 0; y < imageHeight; y++) {
-                    var ix = y * imageWidth + x;
+            var imageData = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
+            for (var x = 0; x < image.naturalWidth; x++) {
+                for (var y = 0; y < image.naturalHeight; y++) {
+                    var ix = y * image.naturalWidth + x;
                     var data = [imageData[ix * 4], imageData[ix * 4 + 1], imageData[ix * 4 + 2]];
                     sourceImage[ix] = data;
                 }
             }
 
             var canvas = document.getElementById("canvas");
-            canvas.width  = imageWidth;
-            canvas.height = imageHeight;
+            canvas.width  = image.naturalWidth;
+            canvas.height = image.naturalHeight;
             canvas.style.backgroundImage = "url(" + e.target.result + ")";
             canvas.style.backgroundSize  = "contain";
 
             worker.postMessage({
                 method: "loadImage",
-                width: imageWidth,
-                height: imageHeight,
+                width: image.naturalWidth,
+                height: image.naturalHeight,
                 sourceImage: sourceImage
             });
             document.getElementById("status").innerHTML = "初期化中 ...";
         };
 
         image.src = e.target.result;
+        document.getElementById("status").innerHTML = "ファイルを開いています ...";
     };
     reader.readAsDataURL(e.target.files[0]);
 }
@@ -82,7 +72,7 @@ function onMouseMoveCanvas (e) {
         ctx.arc(pos.x, pos.y, 3 * pos.scale, 0, 2 * Math.PI);
         ctx.fill();
 
-        seedImage[pos.y * imageWidth + pos.x] = penMode;
+        seedImage[pos.y * image.naturalWidth + pos.x] = penMode;
     }
 }
 
@@ -101,11 +91,11 @@ function onMouseUpCanvas (e) {
 
             var mouseUpPos = getImagePos(e, document.getElementById("canvas"));
             var vec  = { x: mouseUpPos.x - mouseDownPos.x, y: mouseUpPos.y - mouseDownPos.y };
-            for (var x = 0; x < imageWidth; x++) {
-                for (var y = 0; y < imageHeight; y++) {
+            for (var x = 0; x < image.naturalWidth; x++) {
+                for (var y = 0; y < image.naturalHeight; y++) {
                     var vec2 = { x: x - mouseDownPos.x, y: y - mouseDownPos.y };
                     if (vec.x * vec2.y - vec2.x * vec.y < 0) {
-                        seedImage[y * imageWidth + x] = 0;
+                        seedImage[y * image.naturalWidth + x] = 0;
                         ctx.fillRect(x, y, 1, 1);
                     }
                 }
@@ -116,35 +106,35 @@ function onMouseUpCanvas (e) {
 }
 
 function _renderResult (res) {
-    var blurRadius = Math.floor(Math.min(imageWidth, imageHeight) / 250);
+    var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 250);
     var blurred = [];
-    for (var x = 0; x < imageWidth; x++) {
-        for (var y = 0; y < imageWidth; y++) {
+    for (var x = 0; x < image.naturalWidth; x++) {
+        for (var y = 0; y < image.naturalWidth; y++) {
             var sum   = 0;
             var count = 0;
             for (var dx = - blurRadius; dx <= blurRadius; dx++) {
                 for (var dy = - blurRadius; dy <= blurRadius; dy++) {
-                    if (0 < x + dx && x + dx < imageWidth && 0 < y + dy && y + dy < imageHeight) {
-                        sum += res[(y + dy) * imageWidth + (x + dx)] * 255;
+                    if (0 < x + dx && x + dx < image.naturalWidth && 0 < y + dy && y + dy < image.naturalHeight) {
+                        sum += res[(y + dy) * image.naturalWidth + (x + dx)] * 255;
                         count++;
                     }
                 }
             }
-            blurred[y * imageWidth + x] = sum / count;
+            blurred[y * image.naturalWidth + x] = sum / count;
         }
     }
 
     var canvas = document.getElementById("res");
-    canvas.width  = imageWidth;
-    canvas.height = imageHeight;
+    canvas.width  = image.naturalWidth;
+    canvas.height = image.naturalHeight;
 
     var ctx = canvas.getContext("2d");
     ctx.drawImage(image, 0, 0);
 
-    var imageData = ctx.getImageData(0, 0, imageWidth, imageHeight);
-    for (var x = 0; x < imageWidth; x++) {
-        for (var y = 0; y < imageHeight; y++) {
-            var ix = y * imageWidth + x;
+    var imageData = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
+    for (var x = 0; x < image.naturalWidth; x++) {
+        for (var y = 0; y < image.naturalHeight; y++) {
+            var ix = y * image.naturalWidth + x;
             imageData.data[ix * 4 + 3] = blurred[ix];
         }
     }
@@ -185,10 +175,15 @@ function run () {
 }
 
 try {
-    worker = newLocalWorker("growcut.js");
-} catch (e) {
     worker = new Worker("growcut.js");
+} catch (e) {
+    /* Executing local script file may fail. Try with a blobURL that case.
+       http://d.hatena.ne.jp/tshino/20180106/1515218776 */
+    var dir  = window.location.href.replace(/\\/g, '/').replace(/\/[^\/]*$/, '/');
+    var blob = new Blob(['importScripts("' + dir + 'growcut.js");'], {type: 'text/javascript'});
+    worker = new Worker(window.URL.createObjectURL(blob));
 }
+
 worker.addEventListener('message', function (e) {
     switch (e.data.method) {
         case "loadImage-complete":

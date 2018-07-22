@@ -1,3 +1,5 @@
+/* A simple growcut segmenter written in js / zk_phi */
+
 var Growcut = {
     /* fields */
     width:         0,  /* width in pixels */
