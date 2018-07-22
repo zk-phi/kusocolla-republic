@@ -61,9 +61,8 @@ var Growcut = {
         for (var x = 0; x < this.width; x++) {
             for (var y = 0; y < this.height; y++) {
                 var ix = y * this.width + x;
-                if (this.reliablityMap[ix] = seedImage[ix] < 2 ? 1 : 0) {
-                    this.updatedCells.push([x, y]);
-                }
+                this.reliablityMap[ix] = seedImage[ix] < 2 ? 1 : 0
+                if (this.reliablityMap[ix]) this.updatedCells.push([x, y]);
             }
         }
     },
