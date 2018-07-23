@@ -3,41 +3,34 @@
 
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="initial-scale=1.0">
     <title>背景抜き太郎</title>
-    <style>
-canvas {
-    width: 100%;
-    max-width: 600px;
-}
-#res {
-    background-image: linear-gradient(45deg, #efefef 25%, transparent 25%, transparent 75%, #efefef 75%, #efefef), linear-gradient(45deg, #efefef 25%, transparent 25%, transparent 75%, #efefef 75%, #efefef);
-    background-position: 0 0, 10px 10px;
-    background-size: 20px 20px;
-}
-    </style>
+    <link rel="stylesheet" href="good-design-award.css">
   </head>
 
-  <body class="container">
+  <body>
     <div id="app">
 
       <h1><small>クソコラ支援</small> 背景抜き太郎</h1>
+      <hr />
 
       <section>
         <h2>入力</h2>
-        <input id="file" type="file" />
+        <label class="btn">
+          ファイルを選ぶ
+          <input id="file" type="file" style="display: none" />
+        </label>
       </section>
 
       <section>
         <h2>設定</h2>
         <canvas id="canvas"></canvas>
         <p>
-          <button id="bg-cut">カット追加 (線より向かって左を削除)</button>
-          <button id="bg">背景ヒントを追加</button>
-          <button id="fg">前景ヒントを追加</button>
+          <button class="btn" id="bg-cut">カット追加 (線より向かって左を削除)</button>
+          <button class="btn" id="bg">背景ヒントを追加</button>
+          <button class="btn" id="fg">前景ヒントを追加</button>
         </p>
         <p>
-          <button disabled id="run">やっていく</button>
+          <button disabled class="btn" id="run">やっていく</button>
           <span id="status"></span>
         </p>
       </section>
@@ -47,7 +40,13 @@ canvas {
         <canvas id="res"></canvas>
       </section>
 
+      <hr />
+
+      <footer>
+        <a href="https://github.com/zk-phi/kusocolla-republic">＜ GitHub のページ</a>
+      </footer>
+
     </div>
+    <script src="script.js"></script>
   </body>
-  <script src="script.js"></script>
 </html>
