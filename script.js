@@ -127,7 +127,7 @@ function run () {
     document.getElementById("run").disabled = true;
 
     var generation = 2;
-    worker.addEventListener('message', function (e) {
+    var listener = function (e) {
         switch (e.data.method) {
             case "initialize-complete":
                 document.getElementById("status").innerHTML = "Growcut-ing (第1世代)...";
@@ -146,10 +146,12 @@ function run () {
             case "getBlurredResult-complete":
                 document.getElementById("status").innerHTML = "";
                 document.getElementById("run").disabled = false;
+                worker.removeEventListener('message', listener);
                 _renderResult(e.data.result);
                 break;
         }
-    });
+    };
+    worker.addEventListener('message', listener);
 
     document.getElementById("status").innerHTML = "Growcut を開始中 ...";
     worker.postMessage({ method: "initialize", seedImage: seedImage })
