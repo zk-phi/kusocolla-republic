@@ -231,6 +231,18 @@ worker.addEventListener('message', function (e) {
 
 /* ---- */
 
+/* set last update datetime */
+function setLastUpdated () {
+    var xhr = new XMLHttpRequest();
+    xhr.responseType = "json";
+    xhr.onload = function () {
+        var jstDate = (new Date(this.response.commit.commit.author.date)).toLocaleString();
+        document.getElementById("lastUpdated").innerHTML = jstDate;
+    };
+    xhr.open("GET", "https://api.github.com/repos/zk-phi/kusocolla-republic/branches/gh-pages");
+    xhr.send();
+}
+
 document.getElementById("file").onclick = function () { document.getElementById("fileInput").click(); };
 document.getElementById("fileInput").onchange = onChangePath;
 document.getElementById("canvas").addEventListener("mousedown", onMouseDownCanvas);
@@ -241,3 +253,4 @@ document.getElementById("run").onclick = run;
 document.getElementById("bg-cut").onclick = function () { penMode = undefined; cutMode = true; };
 document.getElementById("bg").onclick = function () { penMode = 0; cutMode = false; };
 document.getElementById("fg").onclick = function () { penMode = 1; cutMode = false; };
+setLastUpdated();
