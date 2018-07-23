@@ -1,11 +1,87 @@
+HTMLCollection.prototype.forEach = function (fn) {
+    for (var i = 0; i < this.length; i++) fn(this.item(i));
+};
+
+/* ---- Update button state and statusline */
+
+function onLoadImageStart () {
+    document.getElementById("status").innerHTML = "ファイルを開いています ...";
+    document.getElementById("file").disabled = true;
+    document.getElementById("run").disabled = true;
+    document.getElementsByClassName("controls").forEach(function (x) { x.disabled = true; });
+}
+
+function onInitializeStart () {
+    document.getElementById("status").innerHTML = "初期化中 ...";
+    document.getElementsByClassName("controls").forEach(function (x) { x.disabled = false; });
+}
+
+function onInitializeEnd () {
+    document.getElementById("status").innerHTML = "";
+    document.getElementById("file").disabled = false;
+    document.getElementById("run").disabled = false;
+}
+
+function onGrowcutSeed () {
+    document.getElementById("status").innerHTML = "Growcut を開始中 ...";
+    document.getElementById("file").disabled = true;
+    document.getElementById("run").disabled = true;
+    document.getElementsByClassName("controls").forEach(function (x) { x.disabled = true; });
+}
+
+var generation;
+
+function onGrowcutStart () {
+    document.getElementById("status").innerHTML = "Growcut-ing (第1世代) ...";
+    generation = 2;
+}
+
+function onGrowcutProgress (updatedCells) {
+    document.getElementById("status").innerHTML =
+        "Growcut-ing (第" + (generation++) + "世代: 対象ピクセル " + updatedCells + ") ...";
+}
+
+function onBlurStart () {
+    document.getElementById("status").innerHTML = "境界をぼかしています ...";
+}
+
+function onBlurEnd () {
+    document.getElementById("status").innerHTML = "";
+    document.getElementById("file").disabled = false;
+    document.getElementById("run").disabled = false;
+    document.getElementsByClassName("controls").forEach(function (x) { x.disabled = false; });
+}
+
+/* ---- Core */
+
+var BG_PEN_COLOR = "#ff0000";
+var FG_PEN_COLOR = "#0000ff";
+
 var image       = null;
 var sourceImage = []; /* array of [R, G, B] */
 var seedImage   = []; /* array of 0 (bg), 1 (fg) or undefined */
 
-var penMode = undefined; /* 0, 1 or undefined */
-var cutMode = false;
-
 var worker;
+
+function initializeImageArrays (image) {
+    var tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width  = image.naturalWidth;
+    tmpCanvas.height = image.naturalHeight;
+
+    var ctx = tmpCanvas.getContext('2d');
+    ctx.drawImage(image, 0, 0);
+
+    sourceImage = [];
+    seedImage = [];
+    var imageData = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
+    for (var x = 0; x < image.naturalWidth; x++) {
+        for (var y = 0; y < image.naturalHeight; y++) {
+            var ix = y * image.naturalWidth + x;
+            var data = [imageData[ix * 4], imageData[ix * 4 + 1], imageData[ix * 4 + 2]];
+            sourceImage[ix] = data;
+        }
+    }
+}
 
 function onChangePath (e) {
     var reader = new FileReader();
@@ -13,23 +89,7 @@ function onChangePath (e) {
         image = document.createElement("img");
 
         image.onload = function () {
-            var tmpCanvas = document.createElement("canvas");
-            tmpCanvas.width  = image.naturalWidth;
-            tmpCanvas.height = image.naturalHeight;
-
-            var ctx = tmpCanvas.getContext('2d');
-            ctx.drawImage(image, 0, 0);
-
-            sourceImage = [];
-            seedImage = [];
-            var imageData = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
-            for (var x = 0; x < image.naturalWidth; x++) {
-                for (var y = 0; y < image.naturalHeight; y++) {
-                    var ix = y * image.naturalWidth + x;
-                    var data = [imageData[ix * 4], imageData[ix * 4 + 1], imageData[ix * 4 + 2]];
-                    sourceImage[ix] = data;
-                }
-            }
+            initializeImageArrays(image);
 
             var canvas = document.getElementById("canvas");
             canvas.width  = image.naturalWidth;
@@ -37,24 +97,26 @@ function onChangePath (e) {
             canvas.style.backgroundImage = "url(" + e.target.result + ")";
             canvas.style.backgroundSize  = "contain";
 
+            onInitializeStart();
             worker.postMessage({
                 method: "loadImage",
                 width: image.naturalWidth,
                 height: image.naturalHeight,
                 sourceImage: sourceImage
             });
-            document.getElementById("status").innerHTML = "初期化中 ...";
         };
 
         image.src = e.target.result;
-        document.getElementById("status").innerHTML = "ファイルを開いています ...";
     };
+    onLoadImageStart();
     reader.readAsDataURL(e.target.files[0]);
 }
 
+var penMode = undefined; /* 0, 1 or undefined */
+var cutMode = false;
 var mouseDownPos = [];
 
-function getImagePos (e, canvas /* optional */) {
+function getImagePos (e, canvas /* default: e.target */) {
     canvas = canvas || e.target;
     var scale = canvas.width / canvas.offsetWidth;
     var rect = canvas.getBoundingClientRect();
@@ -67,7 +129,7 @@ function onMouseMoveCanvas (e) {
     if (penMode < 2 && mouseDownPos) {
         var pos = getImagePos(e);
         var ctx = e.target.getContext('2d');
-        ctx.fillStyle = penMode == 0 ? "#ff0000" : "#0000ff";
+        ctx.fillStyle = penMode == 0 ? BG_PEN_COLOR : FG_PEN_COLOR;
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, 3 * pos.scale, 0, 2 * Math.PI);
         ctx.fill();
@@ -87,7 +149,7 @@ function onMouseUpCanvas (e) {
             onMouseMoveCanvas(e);
         } else if (cutMode) {
             var ctx = e.target.getContext('2d');
-            ctx.fillStyle = "#ff0000";
+            ctx.fillStyle = BG_PEN_COLOR;
 
             var mouseUpPos = getImagePos(e, document.getElementById("canvas"));
             var vec  = { x: mouseUpPos.x - mouseDownPos.x, y: mouseUpPos.y - mouseDownPos.y };
@@ -124,40 +186,8 @@ function _renderResult (res) {
 }
 
 function run () {
-    document.getElementById("run").disabled = true;
-
-    var generation = 2;
-    var listener = function (e) {
-        switch (e.data.method) {
-            case "initialize-complete":
-                document.getElementById("status").innerHTML = "Growcut-ing (第1世代)...";
-                worker.postMessage({ method: "forwardGeneration" });
-                break;
-            case "forwardGeneration-complete":
-                if (e.data.updated) {
-                    document.getElementById("status").innerHTML = "Growcut-ing (第" + (generation++) + "世代: " + e.data.updated +  ") ...";
-                    worker.postMessage({ method: "forwardGeneration" });
-                } else {
-                    var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 300);
-                    document.getElementById("status").innerHTML = "境界をぼかしています ...";
-                    worker.postMessage({ method: "blurResult", radius: blurRadius });
-                }
-                break;
-            case "blurResult-complete":
-                worker.postMessage({ method: "getResult" });
-                break;
-            case "getResult-complete":
-                document.getElementById("status").innerHTML = "";
-                document.getElementById("run").disabled = false;
-                worker.removeEventListener('message', listener);
-                _renderResult(e.data.result);
-                break;
-        }
-    };
-    worker.addEventListener('message', listener);
-
-    document.getElementById("status").innerHTML = "Growcut を開始中 ...";
-    worker.postMessage({ method: "initialize", seedImage: seedImage })
+    onGrowcutSeed();
+    worker.postMessage({ method: "initialize", seedImage: seedImage });
 }
 
 try {
@@ -173,13 +203,36 @@ try {
 worker.addEventListener('message', function (e) {
     switch (e.data.method) {
         case "loadImage-complete":
-            document.getElementById("status").innerHTML = "";
-            document.getElementById("run").disabled = false;
+            onInitializeEnd();
+            break;
+        case "initialize-complete":
+            onGrowcutStart();
+            worker.postMessage({ method: "forwardGeneration" });
+            break;
+        case "forwardGeneration-complete":
+            if (e.data.updated) {
+                onGrowcutProgress(e.data.updated);
+                worker.postMessage({ method: "forwardGeneration" });
+            } else {
+                var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 300);
+                onBlurStart();
+                worker.postMessage({ method: "blurResult", radius: blurRadius });
+            }
+            break;
+        case "blurResult-complete":
+            worker.postMessage({ method: "getResult" });
+            break;
+        case "getResult-complete":
+            onBlurEnd();
+            _renderResult(e.data.result);
             break;
     }
 });
 
-document.getElementById("file").onchange = onChangePath;
+/* ---- */
+
+document.getElementById("file").onclick = function () { document.getElementById("fileInput").click(); };
+document.getElementById("fileInput").onchange = onChangePath;
 document.getElementById("canvas").addEventListener("mousedown", onMouseDownCanvas);
 document.getElementById("canvas").addEventListener("mousemove", onMouseMoveCanvas);
 document.getElementById("canvas").addEventListener("mouseup", onMouseUpCanvas);

@@ -8,45 +8,42 @@
   </head>
 
   <body>
-    <div id="app">
+    <h1><small>クソコラ支援</small> 背景抜き太郎</h1>
 
-      <h1><small>クソコラ支援</small> 背景抜き太郎</h1>
-      <hr />
+    <hr />
 
-      <section>
-        <h2>入力</h2>
-        <label class="btn">
-          ファイルを選ぶ
-          <input id="file" type="file" style="display: none" />
-        </label>
-      </section>
+    <section>
+      <h2>入力</h2>
+      <button id="file" class="btn">ファイルを選ぶ</button>
+      <input id="fileInput" type="file" style="display: none" />
+    </section>
 
-      <section>
-        <h2>設定</h2>
-        <canvas id="canvas"></canvas>
-        <p>
-          <button class="btn" id="bg-cut">カット追加 (線より向かって左を削除)</button>
-          <button class="btn" id="bg">背景ヒントを追加</button>
-          <button class="btn" id="fg">前景ヒントを追加</button>
-        </p>
-        <p>
-          <button disabled class="btn" id="run">やっていく</button>
-          <span id="status"></span>
-        </p>
-      </section>
+    <section>
+      <h2>設定</h2>
+      <canvas id="canvas"></canvas>
+      <p>
+        <button class="btn controls" disabled id="bg-cut">カット追加 (線より向かって左を削除)</button>
+        <button class="btn controls" disabled id="bg">背景ヒントを追加</button>
+        <button class="btn controls" disabled id="fg">前景ヒントを追加</button>
+      </p>
+      <p>
+        <button disabled class="btn" id="run">やっていく</button>
+        <span id="status"></span>
+      </p>
+    </section>
 
-      <section>
-        <h2>結果</h2>
-        <canvas id="res"></canvas>
-      </section>
+    <section>
+      <h2>結果</h2>
+      <p>右クリックで保存</p>
+      <canvas id="res"></canvas>
+    </section>
 
-      <hr />
+    <hr />
 
-      <footer>
-        <a href="https://github.com/zk-phi/kusocolla-republic">＜ GitHub のページ</a>
-      </footer>
+    <footer>
+      <p><a href="https://github.com/zk-phi/kusocolla-republic">＜ GitHub のページ</a></p>
+    </footer>
 
-    </div>
     <script src="script.js"></script>
   </body>
 </html>
