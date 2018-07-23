@@ -115,7 +115,7 @@ var Growcut = {
         return updated;
     },
 
-    getBlurredResult: function (radius) {
+    blurResult: function (radius) {
         var blurred = [];
         for (var x = 0; x < this.width; x++) {
             cell: for (var y = 0; y < this.height; y++) {
@@ -138,7 +138,7 @@ var Growcut = {
                 blurred[y * this.width + x] = sum / count;
             }
         }
-        return blurred;
+        this.labelMap = blurred;
     },
 
     getResult: function () {
@@ -161,9 +161,9 @@ self.addEventListener('message', function (e) {
         case "forwardGeneration":
             self.postMessage({ method: "forwardGeneration-complete", updated: Growcut.forwardGeneration() });
             break;
-        case "getBlurredResult":
-            var result = Growcut.getBlurredResult(e.data.radius);
-            self.postMessage({ method: "getBlurredResult-complete", result: result });
+        case "blurResult":
+            Growcut.blurResult(e.data.radius);
+            self.postMessage({ method: "blurResult-complete" });
             break;
         case "getResult":
             self.postMessage({ method: "getResult-complete", result: Growcut.getResult() });

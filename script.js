@@ -140,10 +140,13 @@ function run () {
                 } else {
                     var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 500);
                     document.getElementById("status").innerHTML = "境界をぼかしています ...";
-                    worker.postMessage({ method: "getBlurredResult", radius: blurRadius });
+                    worker.postMessage({ method: "blurResult", radius: blurRadius });
                 }
                 break;
-            case "getBlurredResult-complete":
+            case "blurResult-complete":
+                worker.postMessage({ method: "getResult" });
+                break;
+            case "getResult-complete":
                 document.getElementById("status").innerHTML = "";
                 document.getElementById("run").disabled = false;
                 worker.removeEventListener('message', listener);
