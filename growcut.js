@@ -4,7 +4,6 @@ var Growcut = {
     /* fields */
     width:         0,  /* width in pixels */
     height:        0,  /* height in pixels */
-    sourceMap:     [], /* (width * height) array of [R, G, B] (0 - 255 each) */
     labelMap:      [], /* (width * height) array of 0 (bg), 1 (fg) or undefined */
     distanceMap:   [], /* (width * height)^2 array of the similarity of each adjacent colors (0.0 - 1.0) */
     reliablityMap: [], /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
@@ -12,9 +11,8 @@ var Growcut = {
 
     /* Initialize the growcut engine. */
     loadImage: function (width, height, sourceImage) {
-        this.width     = width;
-        this.height    = height;
-        this.sourceMap = sourceImage;
+        this.width  = width;
+        this.height = height;
 
         this.distanceMap = [];
 
@@ -23,9 +21,9 @@ var Growcut = {
             if (!this.distanceMap[ix2]) this.distanceMap[ix2] = [];
 
             var distance = ix == ix2 ? 0 : Math.sqrt(
-                Math.pow(this.sourceMap[ix][0] - this.sourceMap[ix2][0], 2)
-                + Math.pow(this.sourceMap[ix][1] - this.sourceMap[ix2][1], 2)
-                + Math.pow(this.sourceMap[ix][2] - this.sourceMap[ix2][2], 2)
+                Math.pow(sourceImage[ix][0] - sourceImage[ix2][0], 2)
+                + Math.pow(sourceImage[ix][1] - sourceImage[ix2][1], 2)
+                + Math.pow(sourceImage[ix][2] - sourceImage[ix2][2], 2)
             ) / 255 / Math.sqrt(3);
 
             this.distanceMap[ix][ix2] = this.distanceMap[ix2][ix] = 1.0 - distance;
