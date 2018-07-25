@@ -8,14 +8,16 @@
   </head>
 
   <body>
-    <h1><small>クソコラ支援</small> 背景抜き太郎</h1>
+    <h1>背景抜き太郎</h1>
 
     <hr />
 
     <section>
       <h2>入力</h2>
       <p>
-        <button id="file" class="btn">ファイルを選ぶ</button>
+        <button id="file" class="btn">
+          <span class="btn-text">ファイルを選ぶ</span>
+        </button>
         <input id="fileInput" type="file" style="display: none" />
         ※アップロードされません
       </p>
@@ -25,9 +27,15 @@
       <h2>設定</h2>
       <canvas id="canvas"></canvas>
       <p>
-        <button class="btn controls" disabled id="bg-cut">カット追加 (線より向かって左を削除)</button>
-        <button class="btn controls" disabled id="bg">背景ヒントを追加</button>
-        <button class="btn controls" disabled id="fg">前景ヒントを追加</button>
+        <button class="btn controls" disabled id="bg-cut">
+          <span class="btn-text">多角形切り抜き (右回り)</span>
+        </button>
+        <button class="btn controls" disabled id="bg">
+          <span class="btn-text">背景ヒントを追加</span>
+        </button>
+        <button class="btn controls" disabled id="fg">
+          <span class="btn-text">前景ヒントを追加</span>
+        </button>
       </p>
       <p>
         <button disabled class="btn" id="run">やっていく</button>

@@ -15,9 +15,7 @@ h2 {
 
 .btn {
     font-size: small;
-    padding: 7px;
-    line-height: 1;
-    cursor: pointer;
+    padding: 6px;
     background-color: #c0c0c0;
     border-left: 1px solid #eaeaea;
     border-top: 1px solid #eaeaea;
@@ -36,6 +34,16 @@ h2 {
     color: #999;
     background-color: #d0d0d0;
     cursor: not-allowed;
+}
+
+.btn > .btn-text {
+    line-height: 1;
+    padding: 2px;
+    border: 1px solid transparent;
+}
+
+.btn:active > .btn-text, .btn:focus > .btn-text {
+    border: 1px dotted;
 }
 
 button:focus {
