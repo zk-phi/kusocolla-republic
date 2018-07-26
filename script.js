@@ -81,11 +81,14 @@ function initializeImageArrays (image) {
             sourceImage[ix] = data;
         }
     }
+
+    tmpCanvas.remove();
 }
 
 function onChangePath (e) {
     var reader = new FileReader();
     reader.onload = function (e) {
+        if (image) image.remove(); /* delete old image object */
         image = document.createElement("img");
 
         image.onload = function () {
