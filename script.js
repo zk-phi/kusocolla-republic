@@ -54,9 +54,6 @@ function onBlurEnd () {
 
 /* ---- Core */
 
-var BG_PEN_COLOR = "#ff0000";
-var FG_PEN_COLOR = "#0000ff";
-
 var image       = null;
 var sourceImage = []; /* array of [R, G, B] */
 var seedImage   = []; /* array of 0 (bg), 1 (fg) or undefined */
@@ -114,6 +111,11 @@ function onChangePath (e) {
     onLoadImageStart();
     reader.readAsDataURL(e.target.files[0]);
 }
+
+/* ---- */
+
+var BG_PEN_COLOR = "#ff0000";
+var FG_PEN_COLOR = "#0000ff";
 
 var penMode = undefined; /* 0, 1 or undefined */
 var cutMode = false;
