@@ -172,6 +172,16 @@ function onMouseUpCanvas (e) {
     }
 }
 
+/* ---- */
+
+function run () {
+    penMode      = undefined;
+    cutMode      = false;
+    mouseDownPos = [];
+    onGrowcutSeed();
+    worker.postMessage({ method: "initialize", seedImage: seedImage });
+}
+
 function _renderResult (res) {
     var canvas = document.getElementById("res");
     canvas.width  = image.naturalWidth;
@@ -190,10 +200,7 @@ function _renderResult (res) {
     ctx.putImageData(imageData, 0, 0);
 }
 
-function run () {
-    onGrowcutSeed();
-    worker.postMessage({ method: "initialize", seedImage: seedImage });
-}
+/* ---- */
 
 try {
     worker = new Worker("growcut.js");
