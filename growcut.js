@@ -140,8 +140,58 @@ var Growcut = {
     },
 
     getResult: function () {
-        return this.labelMap.slice(0);
-    }
+        var minx = null;
+        out: for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                var ix = y * this.width + x;
+                if (this.labelMap[ix] != 0) {
+                    minx = x;
+                    break out;
+                }
+            }
+        }
+
+        var miny = null;
+        out: for (var y = 0; y < this.height; y++) {
+            for (var x = 0; x < this.width; x++) {
+                var ix = y * this.width + x;
+                if (this.labelMap[ix] != 0) {
+                    miny = y;
+                    break out;
+                }
+            }
+        }
+
+        var maxx = null;
+        out: for (var x = this.width - 1; 0 <= x; x--) {
+            for (var y = 0; y < this.height; y++) {
+                var ix = y * this.width + x;
+                if (this.labelMap[ix] != 0) {
+                    maxx = x;
+                    break out;
+                }
+            }
+        }
+
+        var maxy = null;
+        out: for (var y = this.height - 1; 0 <= y; y--) {
+            for (var x = 0; x < this.width; x++) {
+                var ix = y * this.width + x;
+                if (this.labelMap[ix] != 0) {
+                    maxy = y;
+                    break out;
+                }
+            }
+        }
+
+        return {
+            top:    miny || 0,
+            left:   minx || 0,
+            height: (maxy || -1) + 1 - (miny || 0),
+            width:  (maxx || -1) + 1 - (minx || 0),
+            data:   this.labelMap.slice(0)
+        };
+    },
 }
 
 /* WebWorker things */

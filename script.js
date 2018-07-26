@@ -194,10 +194,13 @@ function _renderResult (res) {
     for (var x = 0; x < image.naturalWidth; x++) {
         for (var y = 0; y < image.naturalHeight; y++) {
             var ix = y * image.naturalWidth + x;
-            imageData.data[ix * 4 + 3] = Math.floor(res[ix] * 255);
+            imageData.data[ix * 4 + 3] = Math.floor(res.data[ix] * 255);
         }
     }
-    ctx.putImageData(imageData, 0, 0);
+
+    canvas.width  = res.width;
+    canvas.height = res.height;
+    ctx.putImageData(imageData, - res.left, - res.top);
 }
 
 /* ---- */
