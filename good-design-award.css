@@ -15,19 +15,19 @@ h2 {
 
 .btn {
     font-size: small;
-    padding: 5px;
+    padding: 2px;
     background-color: #c0c0c0;
-    border-left: 1px solid #eaeaea;
-    border-top: 1px solid #eaeaea;
-    border-right: 1px solid #717171;
-    border-bottom: 1px solid #717171;
+    border-left: 2px solid #eaeaea;
+    border-top: 2px solid #eaeaea;
+    border-right: 2px solid #717171;
+    border-bottom: 2px solid #717171;
 }
 
 .btn:active {
-    border-right: 1px solid #eaeaea;
-    border-bottom: 1px solid #eaeaea;
-    border-left: 1px solid #717171;
-    border-top: 1px solid #717171;
+    border-right: 2px solid #eaeaea;
+    border-bottom: 2px solid #eaeaea;
+    border-left: 2px solid #717171;
+    border-top: 2px solid #717171;
 }
 
 .btn[disabled], .btn.disabled {
@@ -37,8 +37,9 @@ h2 {
 }
 
 .btn > .btn-text {
+    display: inline-block;
     line-height: 1;
-    padding: 2px;
+    padding: 5px;
     border: 1px solid transparent;
 }
 
