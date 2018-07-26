@@ -121,7 +121,7 @@ var Growcut = {
                 var count = 0;
                 for (var dx = - radius; dx <= radius; dx++) {
                     for (var dy = - radius; dy <= radius; dy++) {
-                        if (0 < x + dx && x + dx < this.width && 0 < y + dy && y + dy < this.width) {
+                        if (0 <= x + dx && x + dx < this.width && 0 <= y + dy && y + dy < this.height) {
                             var ix = (y + dy) * this.width + (x + dx);
                             if (this.labelMap[ix] < 2) {
                                 sum += this.labelMap[ix];
