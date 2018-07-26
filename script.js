@@ -55,7 +55,7 @@ function onBlurEnd () {
 /* ---- Core */
 
 var image       = null;
-var sourceImage = []; /* array of [R, G, B] */
+var sourceImage = null; /* array of [R, G, B, A, R, G, B, A, ...] */
 var seedImage   = []; /* array of 0 (bg), 1 (fg) or undefined */
 
 var worker;
@@ -68,16 +68,8 @@ function initializeImageArrays (image) {
     var ctx = tmpCanvas.getContext('2d');
     ctx.drawImage(image, 0, 0);
 
-    sourceImage = [];
-    seedImage = [];
-    var imageData = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
-    for (var x = 0; x < image.naturalWidth; x++) {
-        for (var y = 0; y < image.naturalHeight; y++) {
-            var ix = y * image.naturalWidth + x;
-            var data = [imageData[ix * 4], imageData[ix * 4 + 1], imageData[ix * 4 + 2]];
-            sourceImage[ix] = data;
-        }
-    }
+    sourceImage = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
+    seedImage   = [];
 
     tmpCanvas.remove();
 }

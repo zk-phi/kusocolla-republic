@@ -21,9 +21,9 @@ var Growcut = {
             if (!this.distanceMap[ix2]) this.distanceMap[ix2] = [];
 
             var distance = ix == ix2 ? 0 : Math.sqrt(
-                Math.pow(sourceImage[ix][0] - sourceImage[ix2][0], 2)
-                + Math.pow(sourceImage[ix][1] - sourceImage[ix2][1], 2)
-                + Math.pow(sourceImage[ix][2] - sourceImage[ix2][2], 2)
+                Math.pow(sourceImage[ix * 4 + 0] - sourceImage[ix2 * 4 + 0], 2)
+                + Math.pow(sourceImage[ix * 4 + 1] - sourceImage[ix2 * 4 + 1], 2)
+                + Math.pow(sourceImage[ix * 4 + 2] - sourceImage[ix2 * 4 + 2], 2)
             ) / 255 / Math.sqrt(3);
 
             this.distanceMap[ix][ix2] = this.distanceMap[ix2][ix] = 1.0 - distance;
@@ -45,7 +45,7 @@ var Growcut = {
                 if (x + 1 < width) _setDistanceOfTwoCells(ix, ix + 1);
                 if (y + 1 < height) {
                     _setDistanceOfTwoCells(ix, ix + width);
-                    if (x > 0) _setDistanceOfTwoCells(ix, (ix + width) - 1);
+                    if (x > 0) _setDistanceOfTwoCells(ix, ix + width - 1);
                     if (x + 1 < width) _setDistanceOfTwoCells(ix, ix + width + 1);
                 }
             }
