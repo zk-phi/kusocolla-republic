@@ -151,10 +151,10 @@ function onMouseUpCanvas (e) {
             var mouseUpPos = getImagePos(e, document.getElementById("canvas"));
             var vec  = { x: mouseUpPos.x - mouseDownPos.x, y: mouseUpPos.y - mouseDownPos.y };
             for (var x = 0; x < image.naturalWidth; x++) {
-                for (var y = 0; y < image.naturalHeight; y++) {
+                for (var y = 0, ix = x; y < image.naturalHeight; y++, ix += image.naturalWidth) {
                     var vec2 = { x: x - mouseDownPos.x, y: y - mouseDownPos.y };
                     if (vec.x * vec2.y - vec2.x * vec.y < 0) {
-                        seedImage[y * image.naturalWidth + x] = 0;
+                        seedImage[ix] = 0;
                         ctx.fillRect(x, y, 1, 1);
                     }
                 }
@@ -184,8 +184,7 @@ function _renderResult (res) {
 
     var imageData = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
     for (var x = 0; x < image.naturalWidth; x++) {
-        for (var y = 0; y < image.naturalHeight; y++) {
-            var ix = y * image.naturalWidth + x;
+        for (var y = 0, ix = x; y < image.naturalHeight; y++, ix += image.naturalWidth) {
             imageData.data[ix * 4 + 3] = Math.floor(res.data[ix] * 255);
         }
     }

@@ -1,5 +1,7 @@
 /* A simple growcut segmenter written in js / zk_phi */
 
+var SQRT3 = Math.sqrt(3);
+
 var Growcut = {
     /* fields */
     width:         0,  /* width in pixels */
@@ -24,14 +26,13 @@ var Growcut = {
                 Math.pow(sourceImage[ix * 4 + 0] - sourceImage[ix2 * 4 + 0], 2)
                 + Math.pow(sourceImage[ix * 4 + 1] - sourceImage[ix2 * 4 + 1], 2)
                 + Math.pow(sourceImage[ix * 4 + 2] - sourceImage[ix2 * 4 + 2], 2)
-            ) / 255 / Math.sqrt(3);
+            ) / 255 / SQRT3;
 
             this.distanceMap[ix][ix2] = this.distanceMap[ix2][ix] = 1.0 - distance;
         }.bind(this);
 
         for (var x = 0; x < width; x++) {
-            for (var y = 0; y < height; y++) {
-                var ix = y * width + x;
+            for (var y = 0, ix = x; y < height; y++, ix += width) {
                 /*     x - 1        x        x + 1
                    +------------+--------+------------+
                    | -          | -      | -          | y - 1
@@ -57,8 +58,7 @@ var Growcut = {
         this.reliablityMap = [];
         this.updatedCells  = [];
         for (var x = 0; x < this.width; x++) {
-            for (var y = 0; y < this.height; y++) {
-                var ix = y * this.width + x;
+            for (var y = 0, ix = x; y < this.height; y++, ix += this.width) {
                 this.reliablityMap[ix] = seedImage[ix] < 2 ? 1 : 0
                 if (this.reliablityMap[ix]) this.updatedCells.push([x, y]);
             }
@@ -142,8 +142,7 @@ var Growcut = {
     getResult: function () {
         var minx = null;
         out: for (var x = 0; x < this.width; x++) {
-            for (var y = 0; y < this.height; y++) {
-                var ix = y * this.width + x;
+            for (var y = 0, ix = x; y < this.height; y++, ix += this.width) {
                 if (this.labelMap[ix] != 0) {
                     minx = x;
                     break out;
@@ -153,8 +152,7 @@ var Growcut = {
 
         var miny = null;
         out: for (var y = 0; y < this.height; y++) {
-            for (var x = 0; x < this.width; x++) {
-                var ix = y * this.width + x;
+            for (var x = 0, ix = y * this.width; x < this.width; x++, ix++) {
                 if (this.labelMap[ix] != 0) {
                     miny = y;
                     break out;
@@ -164,8 +162,7 @@ var Growcut = {
 
         var maxx = null;
         out: for (var x = this.width - 1; 0 <= x; x--) {
-            for (var y = 0; y < this.height; y++) {
-                var ix = y * this.width + x;
+            for (var y = 0, ix = x; y < this.height; y++, ix += this.width) {
                 if (this.labelMap[ix] != 0) {
                     maxx = x;
                     break out;
@@ -175,8 +172,7 @@ var Growcut = {
 
         var maxy = null;
         out: for (var y = this.height - 1; 0 <= y; y--) {
-            for (var x = 0; x < this.width; x++) {
-                var ix = y * this.width + x;
+            for (var x = 0, ix = y * this.width; x < this.width; x++, ix++) {
                 if (this.labelMap[ix] != 0) {
                     maxy = y;
                     break out;
