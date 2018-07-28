@@ -6,35 +6,18 @@ canvas + webworker を使ってブラウザ上でゴリゴリ画像処理する�
 
 普通に使えると思うので、よしなに遊んでください。
 
-# growcut.js
+# growcut.js を直接使う
 
 背景分離 (画像セグメンテーション) アルゴリズム "growcut" の js 実装です。
 
 ## 1. 元画像を用意する
 
-元画像を `[R, G, B]` x ピクセル数 の配列で用意します。
+元画像を `[R, G, B, A, R, G, B, A, ...]` の `Uint8Array` で用意します。
 
 ```javascript
-var sourceImage = [...];
+var sourceImage = ...;
 var imageWidth  = ...;
 var imageHeight = sourceImage.length / imageWidth;
-```
-
-画像ファイルから作る場合は、いったん canvas に流してから `getImageData` を使うと取れます。
-
-```javascript
-var context = canvas.getContext('2d');
-context.drawImage(image, 0, 0);
-var data = context.getImageData.data; // こいつは R, G, B, A, R, G, B, A, ... が一列に並んだ配列
-
-// [R, G, B], [R, G, B], ... の形に直してやる
-var sourceImage = [];
-for (var x = 0; x < image.naturalWidth; x++) {
-  for (var y = 0; y < image.naturalHeight; y++) {
-    var index = y * image.naturalWidth + x;
-    sourceImage[index] = [data[index * 4], data[index * 4 + 1], data[index * 4 + 2]];
-  }
-}
 ```
 
 用意した画像を growcut エンジンに渡します。
@@ -43,14 +26,22 @@ for (var x = 0; x < image.naturalWidth; x++) {
 Growcut.loadImage(imageWidth, imageHeight, sourceImage);
 ```
 
+Tips: 画像ファイルから作る場合は、いったん canvas に流してから `getImageData` を使うと `Uint8Array` が取れます。
+
+```javascript
+var context = canvas.getContext('2d');
+context.drawImage(image, 0, 0);
+sourceImage = context.getImageData.data;
+```
+
 ## 2. 前景・背景のヒントを用意する
 
-前景・背景のヒントデータを `0` (確実に背景), `1` (確実に前景), `undefined` (おまかせ) の配列として用意します。
+前景・背景のヒントデータを `1` (確実に背景), `2` (確実に前景), `0` (おまかせ) の `Uint8Array` として用意します。
 
 たいていはユーザーの入力から生成する感じになると思います。
 
 ```javascript
-var seedImage = [...];
+var seedImage = ...;
 ```
 
 用意したヒントデータを growcut エンジンに渡します。
@@ -71,10 +62,9 @@ do {
 } while (updated);
 ```
 
-
 ## 4. 結果を取得
 
-`getResult` 関数で growcut の結果を取得します。結果は `seedImage` と同様に、それぞれのピクセルが背景 (`0`) か前景 (`1`) かを並べた配列で返ります。 *growcut が収束していれば* `undefined` は含まれません。
+`getResult` 関数で growcut の結果を取得します。それぞれのピクセルが背景 (`0`) か前景 (`255`) かを並べた `Uint8Array` で返ります。growcut が収束する前に `getResult` が呼び出された場合、未確定のセルは全て前景として返ります。
 
 ## WebWorker から使う
 
