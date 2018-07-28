@@ -1,7 +1,3 @@
-HTMLCollection.prototype.forEach = function (fn) {
-    for (var i = 0; i < this.length; i++) fn(this.item(i));
-};
-
 /* ---- Update button state and statusline */
 
 function onLoadImageStart () {
@@ -52,15 +48,15 @@ function onBlurEnd () {
     document.getElementsByClassName("controls").forEach(function (x) { x.disabled = false; });
 }
 
-/* ---- Core */
+/* ---- Utils */
 
-var image       = null;
-var sourceImage = null; /* array of [R, G, B, A, R, G, B, A, ...] */
-var seedImage   = null; /* array of 0 (undefined), 1 (bg) or 2 (fg) */
+/* "forEach" over a collection of DOMs. */
+HTMLCollection.prototype.forEach = function (fn) {
+    for (var i = 0; i < this.length; i++) fn(this.item(i));
+};
 
-var worker;
-
-function initializeImageArrays (image) {
+/* Convert image into an Uint8Array object. */
+function imageData (image) {
     var tmpCanvas = document.createElement("canvas");
     tmpCanvas.width  = image.naturalWidth;
     tmpCanvas.height = image.naturalHeight;
@@ -68,11 +64,50 @@ function initializeImageArrays (image) {
     var ctx = tmpCanvas.getContext('2d');
     ctx.drawImage(image, 0, 0);
 
-    sourceImage = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
-    seedImage   = new Uint8Array(image.naturalWidth * image.naturalHeight);
-
+    var data = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
     tmpCanvas.remove();
+
+    return data;
 }
+
+/* Get event's position in the canvas image. If the event.target is
+   not the canvas, you may pass the canvas as the second optional
+   argument. */
+function getImagePos (e, canvas /* default: e.target */) {
+    canvas = canvas || e.target;
+    var scale = canvas.width / canvas.offsetWidth;
+    var rect = canvas.getBoundingClientRect();
+    var imgX = Math.floor((e.clientX - rect.left) * scale);
+    var imgY = Math.floor((e.clientY - rect.top) * scale);
+    return { x: imgX, y: imgY, scale: scale };
+}
+
+/* Get the time string of this branch's last commit. */
+function getUpdatedTDatetime (handler) {
+    var xhr = new XMLHttpRequest();
+    xhr.responseType = "json";
+    xhr.onload = function () {
+        var jstDate = (new Date(this.response.commit.commit.author.date)).toLocaleString();
+        handler(jstDate);
+    };
+    xhr.open("GET", "https://api.github.com/repos/zk-phi/kusocolla-republic/branches/gh-pages");
+    xhr.send();
+}
+
+/* ---- Core */
+
+var image       = null;
+var sourceImage = null; /* array of [R, G, B, A, R, G, B, A, ...] */
+var seedImage   = null; /* array of 0 (undefined), 1 (bg) or 2 (fg) */
+
+var BG_PEN_COLOR = "#ff0000";
+var FG_PEN_COLOR = "#0000ff";
+
+var penMode = 0; /* 0, 1 or 2 */
+var cutMode = false;
+var mouseDownPos = [];
+
+var worker;
 
 function onChangePath (e) {
     var reader = new FileReader();
@@ -81,7 +116,8 @@ function onChangePath (e) {
         image = document.createElement("img");
 
         image.onload = function () {
-            initializeImageArrays(image);
+            sourceImage = imageData(image);
+            seedImage   = new Uint8Array(image.naturalWidth * image.naturalHeight);
 
             var canvas = document.getElementById("canvas");
             canvas.width  = image.naturalWidth;
@@ -102,24 +138,6 @@ function onChangePath (e) {
     };
     onLoadImageStart();
     reader.readAsDataURL(e.target.files[0]);
-}
-
-/* ---- */
-
-var BG_PEN_COLOR = "#ff0000";
-var FG_PEN_COLOR = "#0000ff";
-
-var penMode = 0; /* 0, 1 or 2 */
-var cutMode = false;
-var mouseDownPos = [];
-
-function getImagePos (e, canvas /* default: e.target */) {
-    canvas = canvas || e.target;
-    var scale = canvas.width / canvas.offsetWidth;
-    var rect = canvas.getBoundingClientRect();
-    var imgX = Math.floor((e.clientX - rect.left) * scale);
-    var imgY = Math.floor((e.clientY - rect.top) * scale);
-    return { x: imgX, y: imgY, scale: scale };
 }
 
 function onMouseMoveCanvas (e) {
@@ -163,8 +181,6 @@ function onMouseUpCanvas (e) {
         mouseDownPos = null;
     }
 }
-
-/* ---- */
 
 function run () {
     penMode      = 0;
@@ -237,18 +253,7 @@ worker.addEventListener('message', function (e) {
 
 /* ---- */
 
-/* set last update datetime */
-function setLastUpdated () {
-    var xhr = new XMLHttpRequest();
-    xhr.responseType = "json";
-    xhr.onload = function () {
-        var jstDate = (new Date(this.response.commit.commit.author.date)).toLocaleString();
-        document.getElementById("lastUpdated").innerHTML = jstDate;
-    };
-    xhr.open("GET", "https://api.github.com/repos/zk-phi/kusocolla-republic/branches/gh-pages");
-    xhr.send();
-}
-
+getUpdatedTDatetime(function (datetime) {  document.getElementById("lastUpdated").innerHTML = datetime; });
 document.getElementById("file").onclick = function () { document.getElementById("fileInput").click(); };
 document.getElementById("fileInput").onchange = onChangePath;
 document.getElementById("canvas").addEventListener("mousedown", onMouseDownCanvas);
@@ -259,4 +264,3 @@ document.getElementById("run").onclick = run;
 document.getElementById("bg-cut").onclick = function () { penMode = 0; cutMode = true; };
 document.getElementById("bg").onclick = function () { penMode = 1; cutMode = false; };
 document.getElementById("fg").onclick = function () { penMode = 2; cutMode = false; };
-setLastUpdated();
