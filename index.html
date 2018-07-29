@@ -28,6 +28,16 @@
       <h2>設定</h2>
       <canvas id="canvas"></canvas>
       <p>
+        トリミング
+        左: <input type="number" id="left" value="0" />
+        上: <input type="number" id="top" value="0" />
+        幅: <input type="number" id="right" value="0" />
+        高さ: <input type="number" id="bottom" value="0" />
+        <button class="btn" id="trim" disabled>
+          <span class="btn-text">更新</span>
+        </button>
+      </p>
+      <p>
         <button class="btn controls" disabled id="bg-cut">
           <span class="btn-text">多角形切り抜き (右回り)</span>
         </button>
