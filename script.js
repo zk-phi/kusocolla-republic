@@ -236,9 +236,10 @@ worker.addEventListener('message', function (e) {
                 onGrowcutProgress(e.data.updated);
                 worker.postMessage({ method: "forwardGeneration" });
             } else {
-                var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 300);
-                onBlurStart();
-                worker.postMessage({ method: "blurResult", radius: blurRadius });
+                /* var blurRadius = Math.floor(Math.min(image.naturalWidth, image.naturalHeight) / 300);
+                 * onBlurStart();
+                 * worker.postMessage({ method: "blurResult", radius: blurRadius });*/
+                worker.postMessage({ method: "getResult" });
             }
             break;
         case "blurResult-complete":
