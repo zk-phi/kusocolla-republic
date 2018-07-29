@@ -3,6 +3,7 @@
 function onLoadImageStart () {
     document.getElementById("status").innerHTML = "ファイルを開いています ...";
     document.getElementById("file").disabled = true;
+    document.getElementById("trim").disabled = true;
     document.getElementById("run").disabled = true;
     document.getElementsByClassName("controls").forEach(function (x) { x.disabled = true; });
 }
@@ -15,12 +16,14 @@ function onInitializeStart () {
 function onInitializeEnd () {
     document.getElementById("status").innerHTML = "";
     document.getElementById("file").disabled = false;
+    document.getElementById("trim").disabled = false;
     document.getElementById("run").disabled = false;
 }
 
 function onGrowcutSeed () {
     document.getElementById("status").innerHTML = "Growcut を開始中 ...";
     document.getElementById("file").disabled = true;
+    document.getElementById("trim").disabled = true;
     document.getElementById("run").disabled = true;
     document.getElementsByClassName("controls").forEach(function (x) { x.disabled = true; });
 }
@@ -44,6 +47,7 @@ function onBlurStart () {
 function onBlurEnd () {
     document.getElementById("status").innerHTML = "";
     document.getElementById("file").disabled = false;
+    document.getElementById("trim").disabled = false;
     document.getElementById("run").disabled = false;
     document.getElementsByClassName("controls").forEach(function (x) { x.disabled = false; });
 }
@@ -94,9 +98,23 @@ function getUpdatedTDatetime (handler) {
     xhr.send();
 }
 
+/* Trim the given image and return as an blobURL. */
+function trimImageToURL (image, left, top, right, bottom) {
+    var tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width  = image.naturalWidth - left - right;
+    tmpCanvas.height = image.naturalHeight - top - bottom;
+    tmpCanvas.getContext('2d').drawImage(image, -left, -top);
+
+    var url = tmpCanvas.toDataURL("image/png");
+    tmpCanvas.remove();
+
+    return url;
+}
+
 /* ---- Core */
 
-var image       = null;
+var origImage   = document.createElement("img");
+var image       = document.createElement("img");
 var sourceImage = null; /* array of [R, G, B, A, R, G, B, A, ...] */
 var seedImage   = null; /* array of 0 (undefined), 1 (bg) or 2 (fg) */
 
@@ -112,9 +130,6 @@ var worker;
 function onChangePath (e) {
     var reader = new FileReader();
     reader.onload = function (e) {
-        if (image) image.remove(); /* delete old image object */
-        image = document.createElement("img");
-
         image.onload = function () {
             sourceImage = imageData(image);
             seedImage   = new Uint8Array(image.naturalWidth * image.naturalHeight);
@@ -122,8 +137,9 @@ function onChangePath (e) {
             var canvas = document.getElementById("canvas");
             canvas.width  = image.naturalWidth;
             canvas.height = image.naturalHeight;
-            canvas.style.backgroundImage = "url(" + e.target.result + ")";
+            canvas.style.backgroundImage = "url(" + image.src + ")";
             canvas.style.backgroundSize  = "contain";
+            canvas.getContext('2d').clearRect(0, 0, image.naturalWidth, image.naturalHeight);
 
             onInitializeStart();
             worker.postMessage({
@@ -134,10 +150,28 @@ function onChangePath (e) {
             });
         };
 
-        image.src = e.target.result;
+        origImage.onload = function () {
+            document.getElementById("left").value   = 0;
+            document.getElementById("top").value    = 0;
+            document.getElementById("right").value  = 0;
+            document.getElementById("bottom").value = 0;
+        }
+
+        image.src = origImage.src = e.target.result;
     };
     onLoadImageStart();
     reader.readAsDataURL(e.target.files[0]);
+}
+
+function onTrim () {
+    var url = trimImageToURL(
+        origImage,
+        document.getElementById("left").value,
+        document.getElementById("top").value,
+        document.getElementById("right").value,
+        document.getElementById("bottom").value
+    );
+    image.src = url;
 }
 
 function onMouseMoveCanvas (e) {
@@ -257,6 +291,7 @@ worker.addEventListener('message', function (e) {
 getUpdatedTDatetime(function (datetime) {  document.getElementById("lastUpdated").innerHTML = datetime; });
 document.getElementById("file").onclick = function () { document.getElementById("fileInput").click(); };
 document.getElementById("fileInput").onchange = onChangePath;
+document.getElementById("trim").onclick = onTrim;
 document.getElementById("canvas").addEventListener("mousedown", onMouseDownCanvas);
 document.getElementById("canvas").addEventListener("mousemove", onMouseMoveCanvas);
 document.getElementById("canvas").addEventListener("mouseup", onMouseUpCanvas);
