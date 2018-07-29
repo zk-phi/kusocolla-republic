@@ -5,42 +5,44 @@ var SQRT3 = Math.sqrt(3);
 /* ---- DistanceMap */
 
 function DistanceMap (width, height) {
-    this.width = width;
-    this.array = new Float32Array(width * height * 9);
+    this._width = width;
+    this._array  = new Float32Array(width * height * 9);
 }
 
 DistanceMap.prototype.get = function (index, dx, dy) {
-    return this.array[index * 9 + 4 + dy * this.width + dx];
+    return this._array[index * 9 + 4 + dy * this._width + dx];
 };
 
 DistanceMap.prototype.set = function (index, dx, dy, value) {
-    var index2 = index + dy * this.width + dx;
-    this.array[index * 9 + 4 + dy * this.width + dx] = this.array[index2 * 9 + 4 - dy * this.width - dx] = value;
+    var index2 = index + dy * this._width + dx;
+    this._array[index * 9 + 4 + dy * this._width + dx]
+    = this._array[index2 * 9 + 4 - dy * this._width - dx]
+    = value;
 };
 
-/* ---- IntegerQueue */
+/* ---- UintQueue */
 
 function UintQueue (maxSize) {
-    this.length     = 0;
-    this.maxSize    = maxSize;
-    this.pushPtr    = 0;
-    this.unshiftPtr = 0;
-    this.array      = new Uint32Array(maxSize);
+    this.length      = 0;
+    this._maxSize    = maxSize;
+    this._pushPtr    = 0;
+    this._unshiftPtr = 0;
+    this._array      = new Uint32Array(maxSize);
 }
 
 UintQueue.prototype.unshift = function () {
-    if (this.pushPtr == this.unshiftPtr) return undefined;
+    if (this._pushPtr == this._unshiftPtr) return undefined;
 
-    var val = this.array[this.unshiftPtr];
-    this.unshiftPtr = (this.unshiftPtr + 1) % this.maxSize;
+    var val = this._array[this._unshiftPtr];
+    this._unshiftPtr = (this._unshiftPtr + 1) % this._maxSize;
     this.length--;
 
     return val;
 };
 
 UintQueue.prototype.push = function (value) {
-    this.array[this.pushPtr] = value;
-    this.pushPtr = (this.pushPtr + 1) % this.maxSize;
+    this._array[this._pushPtr] = value;
+    this._pushPtr = (this._pushPtr + 1) % this._maxSize;
     this.length++;
 };
 
