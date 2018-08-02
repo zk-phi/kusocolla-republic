@@ -82,6 +82,18 @@ function getImagePos (e, canvas /* default: e.target */) {
     return { x: imgX, y: imgY, scale: scale };
 }
 
+/* Get the time string of this branch's last commit. */
+function getUpdatedTDatetime (handler) {
+    var xhr = new XMLHttpRequest();
+    xhr.responseType = "json";
+    xhr.onload = function () {
+        var jstDate = (new Date(this.response.commit.commit.author.date)).toLocaleString();
+        handler(jstDate);
+    };
+    xhr.open("GET", "https://api.github.com/repos/zk-phi/kusocolla-republic/branches/gh-pages");
+    xhr.send();
+}
+
 /* ---- Core */
 
 var image       = null;
@@ -245,18 +257,7 @@ worker.addEventListener('message', function (e) {
 
 /* ---- */
 
-/* set last update datetime */
-function setLastUpdated () {
-    var xhr = new XMLHttpRequest();
-    xhr.responseType = "json";
-    xhr.onload = function () {
-        var jstDate = (new Date(this.response.commit.commit.author.date)).toLocaleString();
-        document.getElementById("lastUpdated").innerHTML = jstDate;
-    };
-    xhr.open("GET", "https://api.github.com/repos/zk-phi/kusocolla-republic/branches/gh-pages");
-    xhr.send();
-}
-
+getUpdatedTDatetime(function (datetime) {  document.getElementById("lastUpdated").innerHTML = datetime; });
 document.getElementById("file").onclick = function () { document.getElementById("fileInput").click(); };
 document.getElementById("fileInput").onchange = onChangePath;
 document.getElementById("canvas").addEventListener("mousedown", onMouseDownCanvas);
@@ -267,4 +268,3 @@ document.getElementById("run").onclick = run;
 document.getElementById("bg-cut").onclick = function () { penMode = 0; cutMode = true; };
 document.getElementById("bg").onclick = function () { penMode = 1; cutMode = false; };
 document.getElementById("fg").onclick = function () { penMode = 2; cutMode = false; };
-setLastUpdated();
