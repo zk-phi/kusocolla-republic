@@ -1,7 +1,3 @@
-HTMLCollection.prototype.forEach = function (fn) {
-    for (var i = 0; i < this.length; i++) fn(this.item(i));
-};
-
 /* ---- Update button state and statusline */
 
 function onLoadImageStart () {
@@ -50,6 +46,25 @@ function onBlurEnd () {
     document.getElementById("file").disabled = false;
     document.getElementById("run").disabled = false;
     document.getElementsByClassName("controls").forEach(function (x) { x.disabled = false; });
+}
+
+/* ---- Utils */
+
+/* "forEach" over a collection of DOMs */
+HTMLCollection.prototype.forEach = function (fn) {
+    for (var i = 0; i < this.length; i++) fn(this.item(i));
+};
+
+/* Get event's position in the canvas image. If the event.target is
+   not the canvas, you may pass the canvas as the second optional
+   argument. */
+function getImagePos (e, canvas /* default: e.target */) {
+    canvas = canvas || e.target;
+    var scale = canvas.width / canvas.offsetWidth;
+    var rect = canvas.getBoundingClientRect();
+    var imgX = Math.floor((e.clientX - rect.left) * scale);
+    var imgY = Math.floor((e.clientY - rect.top) * scale);
+    return { x: imgX, y: imgY, scale: scale };
 }
 
 /* ---- Core */
@@ -112,15 +127,6 @@ var FG_PEN_COLOR = "#0000ff";
 var penMode = 0; /* 0, 1 or 2 */
 var cutMode = false;
 var mouseDownPos = [];
-
-function getImagePos (e, canvas /* default: e.target */) {
-    canvas = canvas || e.target;
-    var scale = canvas.width / canvas.offsetWidth;
-    var rect = canvas.getBoundingClientRect();
-    var imgX = Math.floor((e.clientX - rect.left) * scale);
-    var imgY = Math.floor((e.clientY - rect.top) * scale);
-    return { x: imgX, y: imgY, scale: scale };
-}
 
 function onMouseMoveCanvas (e) {
     if (penMode && mouseDownPos) {
