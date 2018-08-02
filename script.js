@@ -55,6 +55,21 @@ HTMLCollection.prototype.forEach = function (fn) {
     for (var i = 0; i < this.length; i++) fn(this.item(i));
 };
 
+/* Convert image into an Uint8Array object. */
+function imageData (image) {
+    var tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width  = image.naturalWidth;
+    tmpCanvas.height = image.naturalHeight;
+
+    var ctx = tmpCanvas.getContext('2d');
+    ctx.drawImage(image, 0, 0);
+
+    var data = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
+    tmpCanvas.remove();
+
+    return data;
+}
+
 /* Get event's position in the canvas image. If the event.target is
    not the canvas, you may pass the canvas as the second optional
    argument. */
@@ -75,20 +90,6 @@ var seedImage   = null; /* array of 0 (undefined), 1 (bg) or 2 (fg) */
 
 var worker;
 
-function initializeImageArrays (image) {
-    var tmpCanvas = document.createElement("canvas");
-    tmpCanvas.width  = image.naturalWidth;
-    tmpCanvas.height = image.naturalHeight;
-
-    var ctx = tmpCanvas.getContext('2d');
-    ctx.drawImage(image, 0, 0);
-
-    sourceImage = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
-    seedImage   = new Uint8Array(image.naturalWidth * image.naturalHeight);
-
-    tmpCanvas.remove();
-}
-
 function onChangePath (e) {
     var reader = new FileReader();
     reader.onload = function (e) {
@@ -96,7 +97,8 @@ function onChangePath (e) {
         image = document.createElement("img");
 
         image.onload = function () {
-            initializeImageArrays(image);
+            sourceImage = imageData(image);
+            seedImage   = new Uint8Array(image.naturalWidth * image.naturalHeight);
 
             var canvas = document.getElementById("canvas");
             canvas.width  = image.naturalWidth;
