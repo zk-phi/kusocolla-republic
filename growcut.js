@@ -2,6 +2,22 @@
 
 var SQRT3 = Math.sqrt(3);
 
+/* ---- DistanceMap */
+
+function DistanceMap (width, height) {
+    this._width = width;
+    this._array = new Float64Array(width * height * 9);
+}
+
+DistanceMap.prototype.get = function (index, dx, dy) {
+    return this._array[index * 9 + 4 + dy * 3 + dx];
+};
+
+DistanceMap.prototype.set = function (index, dx, dy, value) {
+    var index2 = index + dy * this._width + dx;
+    this._array[index * 9 + 4 + dy * 3 + dx] = this._array[index2 * 9 + 4 - dy * 3 - dx] = value;
+};
+
 /* ---- UintQueue */
 
 function UintQueue (maxSize) {
@@ -33,7 +49,7 @@ var Growcut = {
     width:         0,    /* width in pixels */
     height:        0,    /* height in pixels */
     alphaMap:      null, /* (width * height) array of 0 (bg) to 255 (fg) */
-    distanceMap:   [],   /* (width * height)^2 array of the similarity of each adjacent colors (0.0 - 1.0) */
+    distanceMap:   null, /* (width * height)*9 array of the similarity of each adjacent colors (0.0 - 1.0) */
     reliablityMap: null, /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
     updatedCells:  null, /* queue of recently updated cells' X, Y, X, Y, ... (for optimization) */
 
@@ -42,11 +58,10 @@ var Growcut = {
         this.width  = width;
         this.height = height;
 
-        this.distanceMap = [];
+        this.distanceMap = new DistanceMap(width, height);
 
-        var _setDistanceOfTwoCells = function (ix, ix2) {
-            if (!this.distanceMap[ix])  this.distanceMap[ix] = [];
-            if (!this.distanceMap[ix2]) this.distanceMap[ix2] = [];
+        var _setDistanceOfTwoCells = function (ix, dx, dy) {
+            var ix2 = ix + dy * width + dx;
 
             var distance = ix == ix2 ? 0 : Math.sqrt(
                 Math.pow(sourceImage[ix * 4 + 0] - sourceImage[ix2 * 4 + 0], 2)
@@ -54,7 +69,7 @@ var Growcut = {
                 + Math.pow(sourceImage[ix * 4 + 2] - sourceImage[ix2 * 4 + 2], 2)
             ) / 255 / SQRT3;
 
-            this.distanceMap[ix][ix2] = this.distanceMap[ix2][ix] = 1.0 - distance;
+            this.distanceMap.set(ix, dx, dy, 1.0 - distance);
         }.bind(this);
 
         for (var x = 0; x < width; x++) {
@@ -68,12 +83,12 @@ var Growcut = {
                    | ix + w - 1 | ix + w | ix + w + 1 | y + 1
                    +------------+--------+------------+
                  */
-                _setDistanceOfTwoCells(ix, ix);
-                if (x + 1 < width) _setDistanceOfTwoCells(ix, ix + 1);
+                _setDistanceOfTwoCells(ix, 0, 0);
+                if (x + 1 < width) _setDistanceOfTwoCells(ix, 1, 0);
                 if (y + 1 < height) {
-                    _setDistanceOfTwoCells(ix, ix + width);
-                    if (x > 0) _setDistanceOfTwoCells(ix, ix + width - 1);
-                    if (x + 1 < width) _setDistanceOfTwoCells(ix, ix + width + 1);
+                    _setDistanceOfTwoCells(ix, 0, 1);
+                    if (x > 0) _setDistanceOfTwoCells(ix, -1, 1);
+                    if (x + 1 < width) _setDistanceOfTwoCells(ix, 1, 1);
                 }
             }
         }
@@ -125,7 +140,7 @@ var Growcut = {
                         var ix2 = (y + dy) * this.width + (x + dx);
                         adjacentCells.push({
                             alpha: this.alphaMap[ix2],
-                            rel:   this.reliablityMap[ix2] * this.distanceMap[ix][ix2]
+                            rel:   this.reliablityMap[ix2] * this.distanceMap.get(ix, dx, dy)
                         });
                     }
                 }.bind(this));
