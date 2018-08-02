@@ -8,7 +8,7 @@ var Growcut = {
     height:        0,    /* height in pixels */
     alphaMap:      null, /* (width * height) array of 0 (bg) to 255 (fg) */
     distanceMap:   [],   /* (width * height)^2 array of the similarity of each adjacent colors (0.0 - 1.0) */
-    reliablityMap: [],   /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
+    reliablityMap: null, /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
     updatedCells:  [],   /* list of recently updated [X, Y] s (for optimization) */
 
     /* Initialize the growcut engine. */
@@ -55,7 +55,7 @@ var Growcut = {
 
     initialize: function (seedImage) {
         this.alphaMap      = new Uint8Array(this.width * this.height);
-        this.reliablityMap = [];
+        this.reliablityMap = new Float64Array(this.width * this.height);
         this.updatedCells  = [];
         for (var x = 0; x < this.width; x++) {
             for (var y = 0, ix = x; y < this.height; y++, ix += this.width) {
