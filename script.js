@@ -185,7 +185,7 @@ function _renderResult (res) {
     var imageData = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
     for (var x = 0; x < image.naturalWidth; x++) {
         for (var y = 0, ix = x; y < image.naturalHeight; y++, ix += image.naturalWidth) {
-            imageData.data[ix * 4 + 3] = Math.floor(res.data[ix] * 255);
+            imageData.data[ix * 4 + 3] = res.data[ix];
         }
     }
 

@@ -6,7 +6,7 @@ var Growcut = {
     /* fields */
     width:         0,  /* width in pixels */
     height:        0,  /* height in pixels */
-    labelMap:      [], /* (width * height) array of 0 (bg), 1 (fg) or undefined */
+    alphaMap:      [], /* (width * height) array of 0 (bg) to 255 (fg) */
     distanceMap:   [], /* (width * height)^2 array of the similarity of each adjacent colors (0.0 - 1.0) */
     reliablityMap: [], /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
     updatedCells:  [], /* list of recently updated [X, Y] s (for optimization) */
@@ -54,11 +54,12 @@ var Growcut = {
     },
 
     initialize: function (seedImage) {
-        this.labelMap      = seedImage.slice(0);
+        this.alphaMap      = new Uint8Array(this.width * this.height);
         this.reliablityMap = [];
         this.updatedCells  = [];
         for (var x = 0; x < this.width; x++) {
             for (var y = 0, ix = x; y < this.height; y++, ix += this.width) {
+                this.alphaMap[ix] = seedImage[ix] == 0 ? 0 : 255;
                 this.reliablityMap[ix] = seedImage[ix] < 2 ? 1 : 0
                 if (this.reliablityMap[ix]) this.updatedCells.push([x, y]);
             }
@@ -94,7 +95,7 @@ var Growcut = {
                     if (0 < x + dx && x + dx < this.width && 0 < y + dy && y + dy < this.height) {
                         var ix2 = (y + dy) * this.width + (x + dx);
                         adjacentCells.push({
-                            label: this.labelMap[ix2],
+                            alpha: this.alphaMap[ix2],
                             rel:   this.reliablityMap[ix2] * this.distanceMap[ix][ix2]
                         });
                     }
@@ -102,12 +103,12 @@ var Growcut = {
             }.bind(this));
 
             var next = adjacentCells.reduce(function (x, y) { return x.rel < y.rel ? y : x; });
-            if (this.labelMap[ix] != next.label || this.reliablityMap[ix] != next.rel) {
+            if (this.alphaMap[ix] != next.alpha || this.reliablityMap[ix] != next.rel) {
                 updated++;
                 this.updatedCells.push([x, y]);
             }
             this.reliablityMap[ix] = next.rel;
-            this.labelMap[ix]      = next.label;
+            this.alphaMap[ix]      = next.alpha;
         }
 
         return updated;
@@ -116,34 +117,29 @@ var Growcut = {
     blurResult: function (radius) {
         var blurred = [];
         for (var x = 0; x < this.width; x++) {
-            cell: for (var y = 0; y < this.height; y++) {
+            for (var y = 0; y < this.height; y++) {
                 var sum   = 0;
                 var count = 0;
                 for (var dx = - radius; dx <= radius; dx++) {
                     for (var dy = - radius; dy <= radius; dy++) {
                         if (0 <= x + dx && x + dx < this.width && 0 <= y + dy && y + dy < this.height) {
                             var ix = (y + dy) * this.width + (x + dx);
-                            if (this.labelMap[ix] < 2) {
-                                sum += this.labelMap[ix];
-                                count++;
-                            } else {
-                                blurred[y * this.width + x] = undefined;
-                                continue cell;
-                            }
+                            sum += this.alphaMap[ix];
+                            count++;
                         }
                     }
                 }
                 blurred[y * this.width + x] = sum / count;
             }
         }
-        this.labelMap = blurred;
+        this.alphaMap = blurred;
     },
 
     getResult: function () {
         var minx = null;
         out: for (var x = 0; x < this.width; x++) {
             for (var y = 0, ix = x; y < this.height; y++, ix += this.width) {
-                if (this.labelMap[ix] != 0) {
+                if (this.alphaMap[ix]) {
                     minx = x;
                     break out;
                 }
@@ -153,7 +149,7 @@ var Growcut = {
         var miny = null;
         out: for (var y = 0; y < this.height; y++) {
             for (var x = 0, ix = y * this.width; x < this.width; x++, ix++) {
-                if (this.labelMap[ix] != 0) {
+                if (this.alphaMap[ix]) {
                     miny = y;
                     break out;
                 }
@@ -163,7 +159,7 @@ var Growcut = {
         var maxx = null;
         out: for (var x = this.width - 1; 0 <= x; x--) {
             for (var y = 0, ix = x; y < this.height; y++, ix += this.width) {
-                if (this.labelMap[ix] != 0) {
+                if (this.alphaMap[ix]) {
                     maxx = x;
                     break out;
                 }
@@ -173,7 +169,7 @@ var Growcut = {
         var maxy = null;
         out: for (var y = this.height - 1; 0 <= y; y--) {
             for (var x = 0, ix = y * this.width; x < this.width; x++, ix++) {
-                if (this.labelMap[ix] != 0) {
+                if (this.alphaMap[ix]) {
                     maxy = y;
                     break out;
                 }
@@ -185,7 +181,7 @@ var Growcut = {
             left:   minx || 0,
             height: (maxy || -1) + 1 - (miny || 0),
             width:  (maxx || -1) + 1 - (minx || 0),
-            data:   this.labelMap.slice(0)
+            data:   this.alphaMap.slice(0)
         };
     },
 }
