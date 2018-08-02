@@ -2,6 +2,32 @@
 
 var SQRT3 = Math.sqrt(3);
 
+/* ---- UintQueue */
+
+function UintQueue (maxSize) {
+    this.length      = 0;
+    this._maxSize    = maxSize;
+    this._pushPtr    = 0;
+    this._unshiftPtr = 0;
+    this._array      = new Uint16Array(maxSize); /* NOTE: image width must be less than 65536 */
+}
+
+UintQueue.prototype.unshift = function () {
+    var val = this._array[this._unshiftPtr];
+    this._unshiftPtr = (this._unshiftPtr + 1) % this._maxSize;
+    this.length--;
+
+    return val;
+};
+
+UintQueue.prototype.push = function (value) {
+    this._array[this._pushPtr] = value;
+    this._pushPtr = (this._pushPtr + 1) % this._maxSize;
+    this.length++;
+};
+
+/* ---- the Growcut engine */
+
 var Growcut = {
     /* fields */
     width:         0,    /* width in pixels */
@@ -9,7 +35,7 @@ var Growcut = {
     alphaMap:      null, /* (width * height) array of 0 (bg) to 255 (fg) */
     distanceMap:   [],   /* (width * height)^2 array of the similarity of each adjacent colors (0.0 - 1.0) */
     reliablityMap: null, /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
-    updatedCells:  [],   /* list of recently updated [X, Y] s (for optimization) */
+    updatedCells:  null, /* queue of recently updated cells' X, Y, X, Y, ... (for optimization) */
 
     /* Initialize the growcut engine. */
     loadImage: function (width, height, sourceImage) {
@@ -56,12 +82,15 @@ var Growcut = {
     initialize: function (seedImage) {
         this.alphaMap      = new Uint8Array(this.width * this.height);
         this.reliablityMap = new Float64Array(this.width * this.height);
-        this.updatedCells  = [];
+        this.updatedCells  = new UintQueue(this.width * this.height * 2);
         for (var x = 0; x < this.width; x++) {
             for (var y = 0, ix = x; y < this.height; y++, ix += this.width) {
                 this.alphaMap[ix] = seedImage[ix] == 1 ? 0 : 255;
                 this.reliablityMap[ix] = seedImage[ix] ? 1 : 0
-                if (this.reliablityMap[ix]) this.updatedCells.push([x, y]);
+                if (this.reliablityMap[ix]) {
+                    this.updatedCells.push(x);
+                    this.updatedCells.push(y);
+                }
             }
         }
     },
@@ -70,23 +99,23 @@ var Growcut = {
     forwardGeneration: function () {
         var updated = 0;
 
-        var targetCells = [];
-        for (var i = 0; i < this.updatedCells.length; i++) {
-            var x = this.updatedCells[i][0];
-            var y = this.updatedCells[i][1];
+        var targetCells = new UintQueue(this.updatedCells.length * 9);
+        while (this.updatedCells.length) {
+            var x = this.updatedCells.unshift();
+            var y = this.updatedCells.unshift();
             [-1, 0, 1].forEach(function (dx) {
                 [-1, 0, 1].forEach(function (dy) {
                     if (0 < x + dx && x + dx < this.width && 0 < y + dy && y + dy < this.height) {
-                        targetCells.push([x + dx, y + dy]);
+                        targetCells.push(x + dx);
+                        targetCells.push(y + dy);
                     }
                 }.bind(this));
-            }.bind(this))
+            }.bind(this));
         }
 
-        this.updatedCells = [];
-        for (var i = 0; i < targetCells.length; i++) {
-            var x  = targetCells[i][0];
-            var y  = targetCells[i][1];
+        while (targetCells.length) {
+            var x = targetCells.unshift();
+            var y = targetCells.unshift();
             var ix = y * this.width + x;
 
             var adjacentCells = [];
@@ -105,7 +134,8 @@ var Growcut = {
             var next = adjacentCells.reduce(function (x, y) { return x.rel < y.rel ? y : x; });
             if (this.alphaMap[ix] != next.alpha || this.reliablityMap[ix] != next.rel) {
                 updated++;
-                this.updatedCells.push([x, y]);
+                this.updatedCells.push(x);
+                this.updatedCells.push(y);
             }
             this.reliablityMap[ix] = next.rel;
             this.alphaMap[ix]      = next.alpha;
