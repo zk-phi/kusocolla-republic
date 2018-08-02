@@ -59,8 +59,8 @@ var Growcut = {
         this.updatedCells  = [];
         for (var x = 0; x < this.width; x++) {
             for (var y = 0, ix = x; y < this.height; y++, ix += this.width) {
-                this.alphaMap[ix] = seedImage[ix] == 0 ? 0 : 255;
-                this.reliablityMap[ix] = seedImage[ix] < 2 ? 1 : 0
+                this.alphaMap[ix] = seedImage[ix] == 1 ? 0 : 255;
+                this.reliablityMap[ix] = seedImage[ix] ? 1 : 0
                 if (this.reliablityMap[ix]) this.updatedCells.push([x, y]);
             }
         }

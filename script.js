@@ -56,7 +56,7 @@ function onBlurEnd () {
 
 var image       = null;
 var sourceImage = null; /* array of [R, G, B, A, R, G, B, A, ...] */
-var seedImage   = []; /* array of 0 (bg), 1 (fg) or undefined */
+var seedImage   = null; /* array of 0 (undefined), 1 (bg) or 2 (fg) */
 
 var worker;
 
@@ -69,7 +69,7 @@ function initializeImageArrays (image) {
     ctx.drawImage(image, 0, 0);
 
     sourceImage = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight).data;
-    seedImage   = [];
+    seedImage   = new Uint8Array(image.naturalWidth * image.naturalHeight);
 
     tmpCanvas.remove();
 }
@@ -109,7 +109,7 @@ function onChangePath (e) {
 var BG_PEN_COLOR = "#ff0000";
 var FG_PEN_COLOR = "#0000ff";
 
-var penMode = undefined; /* 0, 1 or undefined */
+var penMode = 0; /* 0, 1 or 2 */
 var cutMode = false;
 var mouseDownPos = [];
 
@@ -123,10 +123,10 @@ function getImagePos (e, canvas /* default: e.target */) {
 }
 
 function onMouseMoveCanvas (e) {
-    if (penMode < 2 && mouseDownPos) {
+    if (penMode && mouseDownPos) {
         var pos = getImagePos(e);
         var ctx = e.target.getContext('2d');
-        ctx.fillStyle = penMode == 0 ? BG_PEN_COLOR : FG_PEN_COLOR;
+        ctx.fillStyle = penMode == 1 ? BG_PEN_COLOR : FG_PEN_COLOR;
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, 3 * pos.scale, 0, 2 * Math.PI);
         ctx.fill();
@@ -142,7 +142,7 @@ function onMouseDownCanvas (e) {
 
 function onMouseUpCanvas (e) {
     if (mouseDownPos) {
-        if (penMode < 2) {
+        if (penMode) {
             onMouseMoveCanvas(e);
         } else if (cutMode) {
             var ctx = e.target.getContext('2d');
@@ -154,7 +154,7 @@ function onMouseUpCanvas (e) {
                 for (var y = 0, ix = x; y < image.naturalHeight; y++, ix += image.naturalWidth) {
                     var vec2 = { x: x - mouseDownPos.x, y: y - mouseDownPos.y };
                     if (vec.x * vec2.y - vec2.x * vec.y < 0) {
-                        seedImage[ix] = 0;
+                        seedImage[ix] = 1;
                         ctx.fillRect(x, y, 1, 1);
                     }
                 }
@@ -167,7 +167,7 @@ function onMouseUpCanvas (e) {
 /* ---- */
 
 function run () {
-    penMode      = undefined;
+    penMode      = 0;
     cutMode      = false;
     mouseDownPos = [];
     onGrowcutSeed();
@@ -256,7 +256,7 @@ document.getElementById("canvas").addEventListener("mousemove", onMouseMoveCanva
 document.getElementById("canvas").addEventListener("mouseup", onMouseUpCanvas);
 document.getElementById("canvas").addEventListener("mouseout", onMouseUpCanvas);
 document.getElementById("run").onclick = run;
-document.getElementById("bg-cut").onclick = function () { penMode = undefined; cutMode = true; };
-document.getElementById("bg").onclick = function () { penMode = 0; cutMode = false; };
-document.getElementById("fg").onclick = function () { penMode = 1; cutMode = false; };
+document.getElementById("bg-cut").onclick = function () { penMode = 0; cutMode = true; };
+document.getElementById("bg").onclick = function () { penMode = 1; cutMode = false; };
+document.getElementById("fg").onclick = function () { penMode = 2; cutMode = false; };
 setLastUpdated();
