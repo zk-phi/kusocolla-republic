@@ -4,12 +4,12 @@ var SQRT3 = Math.sqrt(3);
 
 var Growcut = {
     /* fields */
-    width:         0,  /* width in pixels */
-    height:        0,  /* height in pixels */
-    alphaMap:      [], /* (width * height) array of 0 (bg) to 255 (fg) */
-    distanceMap:   [], /* (width * height)^2 array of the similarity of each adjacent colors (0.0 - 1.0) */
-    reliablityMap: [], /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
-    updatedCells:  [], /* list of recently updated [X, Y] s (for optimization) */
+    width:         0,    /* width in pixels */
+    height:        0,    /* height in pixels */
+    alphaMap:      null, /* (width * height) array of 0 (bg) to 255 (fg) */
+    distanceMap:   [],   /* (width * height)^2 array of the similarity of each adjacent colors (0.0 - 1.0) */
+    reliablityMap: [],   /* (width * height) array of the reliablity of each labels (0.0 - 1.0) */
+    updatedCells:  [],   /* list of recently updated [X, Y] s (for optimization) */
 
     /* Initialize the growcut engine. */
     loadImage: function (width, height, sourceImage) {
