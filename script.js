@@ -96,12 +96,14 @@ function getUpdatedDatetime (handler) {
 
 /* ---- Core */
 
-var image       = null;
 var sourceImage = null; /* array of [R, G, B, A, R, G, B, A, ...] */
+var image       = null; /* HTML img object of sourceImage */
 var seedImage   = null; /* array of 0 (undefined), 1 (bg) or 2 (fg) */
 
 var worker;
 
+/* Load an image from given file into image / sourceImage, and
+   initialize seedImage. */
 function onChangePath (e) {
     var reader = new FileReader();
     reader.onload = function (e) {
