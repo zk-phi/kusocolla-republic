@@ -83,7 +83,7 @@ function getImagePos (e, canvas /* default: e.target */) {
 }
 
 /* Get the time string of this branch's last commit. */
-function getUpdatedTDatetime (handler) {
+function getUpdatedDatetime (handler) {
     var xhr = new XMLHttpRequest();
     xhr.responseType = "json";
     xhr.onload = function () {
@@ -257,7 +257,7 @@ worker.addEventListener('message', function (e) {
 
 /* ---- */
 
-getUpdatedTDatetime(function (datetime) {  document.getElementById("lastUpdated").innerHTML = datetime; });
+getUpdatedDatetime(function (datetime) {  document.getElementById("lastUpdated").innerHTML = datetime; });
 document.getElementById("file").onclick = function () { document.getElementById("fileInput").click(); };
 document.getElementById("fileInput").onchange = onChangePath;
 document.getElementById("canvas").addEventListener("mousedown", onMouseDownCanvas);
