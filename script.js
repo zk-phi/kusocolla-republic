@@ -142,7 +142,7 @@ var FG_PEN_COLOR = "#0000ff";
 
 var penMode = 0; /* 0, 1 or 2 */
 var cutMode = false;
-var mouseDownPos = [];
+var mouseDownPos = null;
 
 function onMouseMoveCanvas (e) {
     if (penMode && mouseDownPos) {
