@@ -4,6 +4,7 @@ function onLoadImageStart () {
     document.getElementById("status").innerHTML = "ファイルを開いています ...";
     document.getElementById("file").disabled = true;
     document.getElementById("run").disabled = true;
+    document.getElementById("restore").disabled = true;
     document.getElementsByClassName("controls").forEach(function (x) { x.disabled = true; });
 }
 
@@ -22,6 +23,7 @@ function onGrowcutSeed () {
     document.getElementById("status").innerHTML = "Growcut を開始中 ...";
     document.getElementById("file").disabled = true;
     document.getElementById("run").disabled = true;
+    document.getElementById("restore").disabled = true;
     document.getElementsByClassName("controls").forEach(function (x) { x.disabled = true; });
 }
 
@@ -46,6 +48,14 @@ function onBlurEnd () {
     document.getElementById("file").disabled = false;
     document.getElementById("run").disabled = false;
     document.getElementsByClassName("controls").forEach(function (x) { x.disabled = false; });
+}
+
+function onBackupCreated () {
+    document.getElementById("restore").disabled = false;
+}
+
+function onBackupRestored () {
+    document.getElementById("restore").disabled = true;
 }
 
 /* ---- Utils */
@@ -144,6 +154,9 @@ var penMode = 0; /* 0, 1 or 2 */
 var cutMode = false;
 var mouseDownPos = null;
 
+var canvasBackup = null;
+var seedBackup = null;
+
 function onMouseMoveCanvas (e) {
     if (penMode && mouseDownPos) {
         var pos = getImagePos(e);
@@ -158,8 +171,13 @@ function onMouseMoveCanvas (e) {
 }
 
 function onMouseDownCanvas (e) {
-    mouseDownPos = getImagePos(e);
-    e.preventDefault(e);
+    if (penMode || cutMode) {
+        canvasBackup = e.target.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+        seedBackup = seedImage.copyWithin();
+        onBackupCreated();
+        mouseDownPos = getImagePos(e);
+        e.preventDefault(e);
+    }
 }
 
 function onMouseUpCanvas (e) {
@@ -184,6 +202,13 @@ function onMouseUpCanvas (e) {
         }
         mouseDownPos = null;
     }
+}
+
+function restoreCanvas () {
+    var canvas = document.getElementById("canvas");
+    canvas.getContext('2d').putImageData(canvasBackup, 0, 0);
+    seedImage = seedBackup;
+    onBackupRestored();
 }
 
 /* ---- */
@@ -266,6 +291,7 @@ document.getElementById("canvas").addEventListener("mousedown", onMouseDownCanva
 document.getElementById("canvas").addEventListener("mousemove", onMouseMoveCanvas);
 document.getElementById("canvas").addEventListener("mouseup", onMouseUpCanvas);
 document.getElementById("canvas").addEventListener("mouseout", onMouseUpCanvas);
+document.getElementById("restore").onclick = restoreCanvas;
 document.getElementById("run").onclick = run;
 document.getElementById("bg-cut").onclick = function () { penMode = 0; cutMode = true; };
 document.getElementById("bg").onclick = function () { penMode = 1; cutMode = false; };
