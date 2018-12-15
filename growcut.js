@@ -120,7 +120,7 @@ var Growcut = {
             var y = this.updatedCells.unshift();
             [-1, 0, 1].forEach(function (dx) {
                 [-1, 0, 1].forEach(function (dy) {
-                    if (0 < x + dx && x + dx < this.width && 0 < y + dy && y + dy < this.height) {
+                    if (0 <= x + dx && x + dx < this.width && 0 <= y + dy && y + dy < this.height) {
                         targetCells.push(x + dx);
                         targetCells.push(y + dy);
                     }
@@ -136,7 +136,7 @@ var Growcut = {
             var adjacentCells = [];
             [-1, 0, 1].forEach(function (dx) {
                 [-1, 0, 1].forEach(function (dy) {
-                    if (0 < x + dx && x + dx < this.width && 0 < y + dy && y + dy < this.height) {
+                    if (0 <= x + dx && x + dx < this.width && 0 <= y + dy && y + dy < this.height) {
                         var ix2 = (y + dy) * this.width + (x + dx);
                         adjacentCells.push({
                             alpha: this.alphaMap[ix2],
